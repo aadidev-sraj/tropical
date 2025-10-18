@@ -1,10 +1,9 @@
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
-const { syncAllFromStrapi: syncProducts } = require('./controllers/product.controller');
-const { syncAllFromStrapi: syncFeatured } = require('./controllers/featured.controller');
 const cors = require('cors');
 const morgan = require('morgan');
+const path = require('path');
 
 // Import routes
 const authRoutes = require('./routes/auth.routes');
@@ -13,6 +12,8 @@ const productRoutes = require('./routes/product.routes');
 const featuredRoutes = require('./routes/featured.routes');
 const orderRoutes = require('./routes/order.routes');
 const paymentRoutes = require('./routes/payment.routes');
+const uploadRoutes = require('./routes/upload.routes');
+const heroRoutes = require('./routes/hero.routes');
 
 // Initialize express app
 const app = express();
@@ -22,27 +23,17 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
 
+// Serve uploaded files statically
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 // Connect to MongoDB
 mongoose
   .connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/tropical', {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
-  .then(async () => {
+  .then(() => {
     console.log('Connected to MongoDB');
-    // Kick off background syncs from Strapi
-    try {
-      const count = await syncProducts();
-      console.log(`Products sync complete. Upserted ${count} items.`);
-    } catch (e) {
-      console.error('Products sync failed:', e?.message || e);
-    }
-    try {
-      const count = await syncFeatured();
-      console.log(`Featured sync complete. Upserted ${count} items.`);
-    } catch (e) {
-      console.error('Featured sync failed:', e?.message || e);
-    }
   })
   .catch((err) => console.error('MongoDB connection error:', err));
 
@@ -53,6 +44,8 @@ app.use('/api/products', productRoutes);
 app.use('/api/featured', featuredRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/api/upload', uploadRoutes);
+app.use('/api/hero', heroRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

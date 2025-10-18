@@ -1,13 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const ctrl = require('../controllers/product.controller');
+const { protect, adminOnly } = require('../middleware/auth.middleware');
 
-// Strapi webhook to upsert products on publish/update
-router.post('/webhook/strapi', ctrl.strapiWebhook);
-
-router.post('/sync', ctrl.syncFromStrapi);
-router.get('/sync', ctrl.syncFromStrapi);
+// Public routes
 router.get('/', ctrl.list);
 router.get('/:idOrSlug', ctrl.getOne);
+
+// Admin routes
+router.post('/', protect, adminOnly, ctrl.create);
+router.put('/:id', protect, adminOnly, ctrl.update);
+router.delete('/:id', protect, adminOnly, ctrl.remove);
 
 module.exports = router;

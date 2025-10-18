@@ -44,8 +44,8 @@ class EmailService {
           <tr>
             <td style="padding: 10px; border-bottom: 1px solid #eee;">${index + 1}. ${item.name}${item.size ? ` (${item.size})` : ''}</td>
             <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
-            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">$${item.price.toFixed(2)}</td>
-            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">$${(item.price * item.quantity).toFixed(2)}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">₹${item.price.toFixed(2)}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">₹${(item.price * item.quantity).toFixed(2)}</td>
           </tr>
         `;
       });
@@ -55,32 +55,37 @@ class EmailService {
         <html>
         <head>
           <meta charset="utf-8">
-          <title>Order Confirmation</title>
+          <title>Order Confirmation - The Tropical</title>
         </head>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-            <h1 style="color: white; margin: 0;">🎉 Order Confirmation</h1>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif; line-height: 1.6; color: #1a1a1a; max-width: 600px; margin: 0 auto; padding: 0; background-color: #f5f5f5;">
+          <!-- Header -->
+          <div style="background: #1a1a1a; padding: 40px 30px; text-align: center;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -0.5px;">The Tropical</h1>
+            <p style="color: #40513E; margin: 10px 0 0 0; font-size: 14px; letter-spacing: 2px; text-transform: uppercase;">Order Confirmation</p>
           </div>
           
-          <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
-            <p style="font-size: 16px;">Hello <strong>${customerInfo.name}</strong>!</p>
-            <p>Your order has been placed successfully.</p>
+          <!-- Body -->
+          <div style="background: #ffffff; padding: 40px 30px;">
+            <p style="font-size: 18px; margin: 0 0 10px 0;">Hello <strong>${customerInfo.name}</strong>,</p>
+            <p style="color: #666; margin: 0 0 30px 0;">Thank you for your order! We're excited to get your items to you.</p>
             
-            <div style="background: white; padding: 20px; border-radius: 5px; margin: 20px 0;">
-              <h2 style="color: #667eea; margin-top: 0;">Order Details</h2>
-              <p><strong>Order Number:</strong> ${orderNumber}</p>
-              <p><strong>Order Date:</strong> ${new Date().toLocaleDateString()}</p>
+            <!-- Order Details -->
+            <div style="background: #f9f9f9; padding: 20px; border-radius: 4px; margin: 0 0 25px 0; border-left: 4px solid #40513E;">
+              <h2 style="color: #1a1a1a; margin: 0 0 15px 0; font-size: 18px; font-weight: 700;">Order Details</h2>
+              <p style="margin: 5px 0; color: #666;"><strong style="color: #1a1a1a;">Order Number:</strong> ${orderNumber}</p>
+              <p style="margin: 5px 0; color: #666;"><strong style="color: #1a1a1a;">Order Date:</strong> ${new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
             </div>
             
-            <div style="background: white; padding: 20px; border-radius: 5px; margin: 20px 0;">
-              <h2 style="color: #667eea; margin-top: 0;">Items Ordered</h2>
-              <table style="width: 100%; border-collapse: collapse;">
+            <!-- Items Ordered -->
+            <div style="margin: 0 0 25px 0;">
+              <h2 style="color: #1a1a1a; margin: 0 0 15px 0; font-size: 18px; font-weight: 700;">Items Ordered</h2>
+              <table style="width: 100%; border-collapse: collapse; border: 1px solid #e5e5e5;">
                 <thead>
-                  <tr style="background: #667eea; color: white;">
-                    <th style="padding: 10px; text-align: left;">Item</th>
-                    <th style="padding: 10px; text-align: center;">Qty</th>
-                    <th style="padding: 10px; text-align: right;">Price</th>
-                    <th style="padding: 10px; text-align: right;">Total</th>
+                  <tr style="background: #1a1a1a;">
+                    <th style="padding: 12px; text-align: left; color: #ffffff; font-weight: 600; font-size: 13px;">Item</th>
+                    <th style="padding: 12px; text-align: center; color: #ffffff; font-weight: 600; font-size: 13px;">Qty</th>
+                    <th style="padding: 12px; text-align: right; color: #ffffff; font-weight: 600; font-size: 13px;">Price</th>
+                    <th style="padding: 12px; text-align: right; color: #ffffff; font-weight: 600; font-size: 13px;">Total</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -89,28 +94,36 @@ class EmailService {
               </table>
             </div>
             
-            <div style="background: white; padding: 20px; border-radius: 5px; margin: 20px 0;">
-              <h2 style="color: #667eea; margin-top: 0;">Order Summary</h2>
+            <!-- Order Summary -->
+            <div style="background: #f9f9f9; padding: 20px; border-radius: 4px; margin: 0 0 30px 0;">
+              <h2 style="color: #1a1a1a; margin: 0 0 15px 0; font-size: 18px; font-weight: 700;">Order Summary</h2>
               <table style="width: 100%;">
                 <tr>
-                  <td style="padding: 5px;">Subtotal:</td>
-                  <td style="padding: 5px; text-align: right;">$${pricing.subtotal.toFixed(2)}</td>
+                  <td style="padding: 8px 0; color: #666;">Subtotal:</td>
+                  <td style="padding: 8px 0; text-align: right; color: #1a1a1a; font-weight: 500;">₹${pricing.subtotal.toFixed(2)}</td>
                 </tr>
                 <tr>
-                  <td style="padding: 5px;">Shipping:</td>
-                  <td style="padding: 5px; text-align: right;">$${pricing.shipping.toFixed(2)}</td>
+                  <td style="padding: 8px 0; color: #666;">Shipping:</td>
+                  <td style="padding: 8px 0; text-align: right; color: #1a1a1a; font-weight: 500;">₹${pricing.shipping.toFixed(2)}</td>
                 </tr>
-                <tr style="border-top: 2px solid #667eea; font-weight: bold; font-size: 18px;">
-                  <td style="padding: 10px 5px;">Total:</td>
-                  <td style="padding: 10px 5px; text-align: right;">$${pricing.total.toFixed(2)}</td>
+                <tr style="border-top: 2px solid #1a1a1a;">
+                  <td style="padding: 15px 0 0 0; font-weight: 700; font-size: 20px; color: #1a1a1a;">Total:</td>
+                  <td style="padding: 15px 0 0 0; text-align: right; font-weight: 700; font-size: 20px; color: #40513E;">₹${pricing.total.toFixed(2)}</td>
                 </tr>
               </table>
             </div>
             
-            <div style="text-align: center; margin-top: 30px;">
-              <p style="color: #666;">Thank you for shopping with us! 🛍️</p>
-              <p style="color: #999; font-size: 12px;">If you have any questions, please contact us.</p>
+            <!-- Footer Message -->
+            <div style="text-align: center; padding: 30px 0 0 0; border-top: 1px solid #e5e5e5;">
+              <p style="color: #1a1a1a; font-size: 16px; margin: 0 0 10px 0; font-weight: 600;">Thank you for shopping with The Tropical! 🌴</p>
+              <p style="color: #999; font-size: 13px; margin: 0;">If you have any questions, feel free to contact us.</p>
             </div>
+          </div>
+          
+          <!-- Footer -->
+          <div style="background: #1a1a1a; padding: 20px 30px; text-align: center;">
+            <p style="color: #999; font-size: 12px; margin: 0;">© ${new Date().getFullYear()} The Tropical. All rights reserved.</p>
+            <p style="color: #999; font-size: 12px; margin: 5px 0 0 0;"><a href="https://www.thetropical.in" style="color: #40513E; text-decoration: none;">www.thetropical.in</a></p>
           </div>
         </body>
         </html>
@@ -163,8 +176,8 @@ class EmailService {
           <tr>
             <td style="padding: 10px; border-bottom: 1px solid #eee;">${index + 1}. ${item.name}${item.size ? ` (${item.size})` : ''}</td>
             <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
-            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">$${item.price.toFixed(2)}</td>
-            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">$${(item.price * item.quantity).toFixed(2)}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">₹${item.price.toFixed(2)}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">₹${(item.price * item.quantity).toFixed(2)}</td>
           </tr>
         `;
       });
@@ -237,15 +250,15 @@ class EmailService {
               <table style="width: 100%;">
                 <tr>
                   <td style="padding: 5px;">Subtotal:</td>
-                  <td style="padding: 5px; text-align: right;">$${pricing.subtotal.toFixed(2)}</td>
+                  <td style="padding: 5px; text-align: right;">₹${pricing.subtotal.toFixed(2)}</td>
                 </tr>
                 <tr>
                   <td style="padding: 5px;">Shipping:</td>
-                  <td style="padding: 5px; text-align: right;">$${pricing.shipping.toFixed(2)}</td>
+                  <td style="padding: 5px; text-align: right;">₹${pricing.shipping.toFixed(2)}</td>
                 </tr>
-                <tr style="border-top: 2px solid #667eea; font-weight: bold; font-size: 18px;">
+                <tr style="border-top: 2px solid #1a1a1a; font-weight: bold; font-size: 18px;">
                   <td style="padding: 10px 5px;">Total:</td>
-                  <td style="padding: 10px 5px; text-align: right; color: #28a745;">$${pricing.total.toFixed(2)}</td>
+                  <td style="padding: 10px 5px; text-align: right; color: #40513E;">₹${pricing.total.toFixed(2)}</td>
                 </tr>
               </table>
             </div>

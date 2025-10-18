@@ -7,7 +7,11 @@ const ProductSchema = new mongoose.Schema(
     price: { type: Number, required: true },
     description: { type: String },
     images: [{ type: String }],
-    strapiId: { type: Number, unique: true, sparse: true },
+    sizes: [{ 
+      type: String, 
+      enum: ['S', 'M', 'L', 'XL', 'XXL'],
+      uppercase: true 
+    }],
   },
   { timestamps: true }
 );

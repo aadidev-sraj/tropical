@@ -165,7 +165,7 @@ const ProductsGrid = () => {
                   {product.name}
                 </h3>
                 <div className="flex items-center justify-between">
-                  <span className="text-xl font-bold">{typeof product.price === "number" ? `$${product.price}` : product.price}</span>
+                  <span className="text-xl font-bold">{typeof product.price === "number" ? `₹${product.price}` : product.price}</span>
                   <div className="flex gap-1">
                     {[...Array(5)].map((_, i) => (
                       <svg

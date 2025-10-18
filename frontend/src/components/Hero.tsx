@@ -1,14 +1,50 @@
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "./ui/button";
 import heroImage from "@/assets/hero-fashion.jpg";
+import { apiFetch } from "@/lib/api";
+
+type HeroData = {
+  title: string;
+  subtitle?: string;
+  buttonText: string;
+  buttonLink: string;
+  backgroundImage?: string;
+};
 
 const Hero = () => {
+  const [heroData, setHeroData] = useState<HeroData>({
+    title: "NEW COLLECTION",
+    subtitle: "Discover the latest trends in modern fashion",
+    buttonText: "Shop Now",
+    buttonLink: "/products",
+  });
+  const [backgroundImage, setBackgroundImage] = useState(heroImage);
+
+  useEffect(() => {
+    // Fetch hero data from API
+    apiFetch<{ data: HeroData }>("/hero")
+      .then((response) => {
+        if (response?.data) {
+          setHeroData(response.data);
+          if (response.data.backgroundImage) {
+            setBackgroundImage(response.data.backgroundImage);
+          }
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching hero data:", error);
+        // Use default values on error
+      });
+  }, []);
+
   return (
     <section className="relative h-screen flex items-center justify-center overflow-hidden">
       {/* Background Image with Overlay */}
       <div className="absolute inset-0">
         <img
-          src={heroImage}
-          alt="Fashion collection hero"
+          src={backgroundImage}
+          alt={heroData.title}
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60" />
@@ -17,17 +53,21 @@ const Hero = () => {
       {/* Content */}
       <div className="relative z-10 text-center px-4 animate-fade-in">
         <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-white mb-6 tracking-tighter">
-          NEW COLLECTION
+          {heroData.title}
         </h1>
-        <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-2xl mx-auto">
-          Discover the latest trends in modern fashion
-        </p>
-        <Button
-          size="lg"
-          className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold px-8 py-6 text-lg transition-all hover:scale-105"
-        >
-          Shop Now
-        </Button>
+        {heroData.subtitle && (
+          <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-2xl mx-auto">
+            {heroData.subtitle}
+          </p>
+        )}
+        <Link to={heroData.buttonLink}>
+          <Button
+            size="lg"
+            className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold px-8 py-6 text-lg transition-all hover:scale-105"
+          >
+            {heroData.buttonText}
+          </Button>
+        </Link>
       </div>
 
       {/* Scroll Indicator */}
