@@ -12,7 +12,9 @@ export default defineConfig(({ mode }) => ({
   preview: {
     host: "0.0.0.0",
     port: Number(process.env.PORT || 8080),
-    allowedHosts: ["tropical-frontend.onrender.com"],
+    // Allow Render's hostname (and any custom domain) to reach the preview server
+    // See: https://vitejs.dev/config/preview-options.html#preview-allowedhosts
+    allowedHosts: true,
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
