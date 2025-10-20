@@ -12,7 +12,6 @@ import { toast } from "sonner";
 import { addToCart } from "@/lib/cart";
 import { useNavigate, useLocation } from "react-router-dom";
 import { apiFetch, getToken } from "@/lib/api";
-import * as THREE from "three";
 
 // Draggable element component
 function DraggableElement({ position, onDrag, children, scale = 1 }: any) {
@@ -63,6 +62,7 @@ function TShirt({
   textTexture,
   textPosition,
   textRotation,
+  textScale,
   snappingTarget,
   onSnapToSurface,
   useProjection,
@@ -171,7 +171,7 @@ function TShirt({
             <Decal
               position={[textPosition[0], textPosition[1], textPosition[2]]}
               rotation={[textRotation[0], textRotation[1], textRotation[2]]}
-              scale={[2, 0.6, 1]}
+              scale={[2 * textScale, 0.6 * textScale, 1]}
             >
               <meshStandardMaterial
                 map={textTexture}
@@ -213,6 +213,7 @@ function Scene({
   textTexture,
   textPosition,
   textRotation,
+  textScale,
   snappingTarget,
   onSnapToSurface,
   selectedOverlay,
@@ -236,6 +237,7 @@ function Scene({
         textTexture={textTexture} 
         textPosition={textPosition}
         textRotation={textRotation}
+        textScale={textScale}
         snappingTarget={snappingTarget}
         onSnapToSurface={onSnapToSurface}
         useProjection={useProjection}
