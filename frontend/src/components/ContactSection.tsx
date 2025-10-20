@@ -4,6 +4,7 @@ import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
 import { Mail, Phone, MapPin, Instagram, Facebook, Twitter } from "lucide-react";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api";
 
 const ContactSection = () => {
   const [formData, setFormData] = useState({
@@ -12,25 +13,33 @@ const ContactSection = () => {
     message: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     // Basic validation
     if (!formData.name.trim() || !formData.email.trim() || !formData.message.trim()) {
       toast.error("Please fill in all fields");
       return;
     }
-
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
       toast.error("Please enter a valid email address");
       return;
     }
-
-    // Success
-    toast.success("Message sent! We'll get back to you soon.");
-    setFormData({ name: "", email: "", message: "" });
+    try {
+      const resp: any = await apiFetch("/contact", {
+        method: "POST",
+        body: JSON.stringify(formData),
+      });
+      if (resp?.success) {
+        toast.success("Message sent! We'll get back to you soon.");
+        setFormData({ name: "", email: "", message: "" });
+      } else {
+        toast.error(resp?.message || "Failed to send message. Please try again later.");
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to send message. Please try again later.");
+    }
   };
 
   return (

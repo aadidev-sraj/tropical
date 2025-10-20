@@ -14,7 +14,8 @@ function Products() {
     price: '',
     description: '',
     images: [],
-    sizes: []
+    sizes: [],
+    category: 'other'
   });
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
@@ -101,7 +102,8 @@ function Products() {
       price: product.price,
       description: product.description || '',
       images: product.images || [],
-      sizes: product.sizes || []
+      sizes: product.sizes || [],
+      category: product.category || 'other'
     });
     setShowModal(true);
   };
@@ -120,7 +122,7 @@ function Products() {
 
   const openModal = () => {
     setEditingProduct(null);
-    setFormData({ name: '', price: '', description: '', images: [], sizes: [] });
+    setFormData({ name: '', price: '', description: '', images: [], sizes: [], category: 'other' });
     setShowModal(true);
     setError('');
   };
@@ -128,7 +130,7 @@ function Products() {
   const closeModal = () => {
     setShowModal(false);
     setEditingProduct(null);
-    setFormData({ name: '', price: '', description: '', images: [], sizes: [] });
+    setFormData({ name: '', price: '', description: '', images: [], sizes: [], category: 'other' });
     setError('');
   };
 
@@ -224,6 +226,25 @@ function Products() {
                   onChange={handleInputChange}
                   rows="4"
                 />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="category">Category *</label>
+                <select
+                  id="category"
+                  name="category"
+                  className="form-control"
+                  value={formData.category}
+                  onChange={handleInputChange}
+                  required
+                >
+                  <option value="tshirts">T-Shirts</option>
+                  <option value="shirts">Shirts</option>
+                  <option value="jeans">Jeans</option>
+                  <option value="hoodies">Hoodies</option>
+                  <option value="pants">Pants</option>
+                  <option value="other">Other</option>
+                </select>
               </div>
 
               <div className="form-group">

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+ 
 import { Button } from "./ui/button";
 import heroImage from "@/assets/hero-fashion.jpg";
 import { apiFetch } from "@/lib/api";
@@ -60,14 +60,20 @@ const Hero = () => {
             {heroData.subtitle}
           </p>
         )}
-        <Link to={heroData.buttonLink}>
-          <Button
-            size="lg"
-            className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold px-8 py-6 text-lg transition-all hover:scale-105"
-          >
-            {heroData.buttonText}
-          </Button>
-        </Link>
+        <Button
+          size="lg"
+          className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold px-8 py-6 text-lg transition-all"
+          onClick={() => {
+            const el = document.getElementById("shop");
+            if (el) {
+              el.scrollIntoView({ behavior: "smooth", block: "start" });
+            } else {
+              window.location.href = "/#shop";
+            }
+          }}
+        >
+          {heroData.buttonText}
+        </Button>
       </div>
 
       {/* Scroll Indicator */}

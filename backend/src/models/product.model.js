@@ -12,6 +12,12 @@ const ProductSchema = new mongoose.Schema(
       enum: ['S', 'M', 'L', 'XL', 'XXL'],
       uppercase: true 
     }],
+    category: { 
+      type: String, 
+      enum: ['tshirts', 'shirts', 'jeans', 'hoodies', 'pants', 'other'],
+      default: 'other',
+      lowercase: true
+    },
   },
   { timestamps: true }
 );

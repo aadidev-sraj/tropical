@@ -14,7 +14,12 @@ function slugify(input) {
 // GET /api/products
 exports.list = async (req, res, next) => {
   try {
-    const products = await Product.find().sort({ createdAt: -1 }).lean();
+    const { category } = req.query;
+    const filter = {};
+    if (category) {
+      filter.category = String(category).toLowerCase();
+    }
+    const products = await Product.find(filter).sort({ createdAt: -1 }).lean();
     res.json({ data: products });
   } catch (err) {
     next(err);
@@ -47,7 +52,7 @@ exports.getOne = async (req, res, next) => {
 // POST /api/products (Admin only)
 exports.create = async (req, res, next) => {
   try {
-    const { name, price, description, images, sizes } = req.body;
+    const { name, price, description, images, sizes, category } = req.body;
     
     if (!name || !price) {
       return res.status(400).json({ message: 'Name and price are required' });
@@ -67,7 +72,8 @@ exports.create = async (req, res, next) => {
       price: Number(price),
       description: description || '',
       images: Array.isArray(images) ? images : [],
-      sizes: Array.isArray(sizes) ? sizes : []
+      sizes: Array.isArray(sizes) ? sizes : [],
+      category: category ? String(category).toLowerCase() : undefined
     });
     
     await product.save();
@@ -81,7 +87,7 @@ exports.create = async (req, res, next) => {
 exports.update = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { name, price, description, images, sizes } = req.body;
+    const { name, price, description, images, sizes, category } = req.body;
     
     if (!mongoose.isValidObjectId(id)) {
       return res.status(400).json({ message: 'Invalid product ID' });
@@ -101,6 +107,7 @@ exports.update = async (req, res, next) => {
     if (description !== undefined) product.description = description;
     if (images !== undefined) product.images = Array.isArray(images) ? images : [];
     if (sizes !== undefined) product.sizes = Array.isArray(sizes) ? sizes : [];
+    if (category !== undefined) product.category = String(category).toLowerCase();
     
     await product.save();
     res.json({ data: product });

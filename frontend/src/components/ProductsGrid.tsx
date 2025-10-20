@@ -119,7 +119,7 @@ const ProductsGrid = () => {
   };
 
   return (
-    <section className="py-20 bg-background">
+    <section id="shop" className="py-20 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h2 className="text-4xl md:text-5xl font-bold mb-4">Shop the Collection</h2>
@@ -166,21 +166,6 @@ const ProductsGrid = () => {
                 </h3>
                 <div className="flex items-center justify-between">
                   <span className="text-xl font-bold">{typeof product.price === "number" ? `₹${product.price}` : product.price}</span>
-                  <div className="flex gap-1">
-                    {[...Array(5)].map((_, i) => (
-                      <svg
-                        key={i}
-                        className={`w-4 h-4 ${
-                          i < product.rating
-                            ? "text-accent fill-accent"
-                            : "text-muted fill-muted"
-                        }`}
-                        viewBox="0 0 20 20"
-                      >
-                        <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                      </svg>
-                    ))}
-                  </div>
                 </div>
               </div>
             </Card>

@@ -5,6 +5,7 @@ export type CartItem = {
   image?: string;
   quantity: number;
   size?: string;
+  customization?: any; // For custom T-shirt designs
 };
 
 const KEY = "cart_items";

@@ -1,13 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Search, User, ShoppingBag, Menu, X } from "lucide-react";
+import { User, ShoppingBag, Menu, X } from "lucide-react";
 import { Button } from "./ui/button";
-import { Input } from "./ui/input";
 import { getToken } from "@/lib/api";
 import { getCart } from "@/lib/cart";
 
 const Navbar = () => {
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const isAuthed = !!getToken();
@@ -48,26 +46,11 @@ const Navbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6">
-            {isSearchOpen ? (
-              <div className="relative animate-fade-in">
-                <Input
-                  type="text"
-                  placeholder="Search products..."
-                  className="w-64 pl-10"
-                  autoFocus
-                />
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              </div>
-            ) : (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsSearchOpen(true)}
-                className="transition-transform hover:scale-110"
-              >
-                <Search className="h-5 w-5" />
+            <Link to="/customize">
+              <Button variant="ghost" size="sm">
+                Customize
               </Button>
-            )}
+            </Link>
 
             {isAuthed ? (
               <Link to="/profile">
@@ -122,7 +105,11 @@ const Navbar = () => {
       {isMobileMenuOpen && (
         <div className="md:hidden border-t border-border animate-fade-in">
           <div className="px-4 py-4 space-y-3">
-            <Input type="text" placeholder="Search products..." className="w-full" />
+            <Link to="/customize" className="block">
+              <Button variant="outline" className="w-full">
+                Customize T-Shirt
+              </Button>
+            </Link>
             <div className="flex space-x-4">
               {isAuthed ? (
                 <Link to="/profile" className="flex-1">

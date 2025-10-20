@@ -296,6 +296,46 @@ class EmailService {
       };
     }
   }
+
+  async sendContactMessage({ name, email, message }) {
+    if (!this.transporter) {
+      console.log('Email service not configured. Skipping contact email.');
+      return { success: false, message: 'Email service not configured' };
+    }
+
+    const adminEmail = process.env.ADMIN_EMAIL || process.env.SMTP_EMAIL;
+    if (!adminEmail) {
+      console.log('Admin email not configured. Skipping contact email.');
+      return { success: false, message: 'Admin email not configured' };
+    }
+
+    try {
+      const htmlContent = `
+        <div style="font-family: Arial, sans-serif; line-height:1.6;">
+          <h2>New Contact Message</h2>
+          <p><strong>Name:</strong> ${name}</p>
+          <p><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p>
+          <p><strong>Message:</strong></p>
+          <div style="white-space: pre-wrap; background:#f7f7f7; padding:12px; border-radius:6px;">${message}</div>
+        </div>
+      `;
+
+      const mailOptions = {
+        from: `"${process.env.FROM_NAME || 'Tropical Store'}" <${process.env.SMTP_EMAIL}>`,
+        to: adminEmail,
+        subject: `📩 New Contact Message from ${name}`,
+        replyTo: email,
+        html: htmlContent
+      };
+
+      const info = await this.transporter.sendMail(mailOptions);
+      console.log(`Contact email sent successfully. Message ID: ${info.messageId}`);
+      return { success: true, messageId: info.messageId };
+    } catch (error) {
+      console.error('Error sending contact email:', error);
+      return { success: false, error: error.message };
+    }
+  }
 }
 
 module.exports = new EmailService();

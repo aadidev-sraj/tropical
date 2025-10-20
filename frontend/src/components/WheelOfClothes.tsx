@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Button } from "./ui/button";
 import { listFeatured } from "@/lib/featured";
 import productDress from "@/assets/product-dress-1.jpg";
 import productBlazer from "@/assets/product-blazer.jpg";
@@ -19,7 +18,6 @@ const defaultClothesItems = [
 ];
 
 const WheelOfClothes = () => {
-  const [hoveredItem, setHoveredItem] = useState<number | null>(null);
   const [rotation, setRotation] = useState(0);
   const radius = 35; // percentage from center
   const centerX = 50;
@@ -90,15 +88,9 @@ const WheelOfClothes = () => {
                     top: `${y}%`,
                     transform: "translate(-50%, -50%)",
                   }}
-                  onMouseEnter={() => setHoveredItem(item.id)}
-                  onMouseLeave={() => setHoveredItem(null)}
                 >
                   <div
-                    className={`
-                      relative bg-card rounded-lg overflow-hidden shadow-lg
-                      transition-all duration-300 cursor-pointer
-                      ${hoveredItem === item.id ? "scale-110 shadow-2xl" : "scale-100"}
-                    `}
+                    className="relative bg-card rounded-lg overflow-hidden shadow-lg"
                     style={{ width: "140px", height: "180px" }}
                   >
                     <img
@@ -106,28 +98,6 @@ const WheelOfClothes = () => {
                       alt={item.name}
                       className="w-full h-full object-cover"
                     />
-                    
-                    {/* Hover Overlay */}
-                    <div
-                      className={`
-                        absolute inset-0 bg-black/70 flex flex-col items-center justify-center
-                        transition-opacity duration-300 p-4
-                        ${hoveredItem === item.id ? "opacity-100" : "opacity-0"}
-                      `}
-                    >
-                      <h3 className="text-white font-semibold text-sm mb-2 text-center">
-                        {item.name}
-                      </h3>
-                      {item.price && (
-                        <p className="text-white text-lg font-bold mb-3">{item.price}</p>
-                      )}
-                      <Button
-                        size="sm"
-                        className="bg-accent hover:bg-accent/90 text-accent-foreground text-xs"
-                      >
-                        View
-                      </Button>
-                    </div>
                   </div>
                 </div>
               );

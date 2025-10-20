@@ -36,7 +36,7 @@ const Cart = () => {
     (sum, item) => sum + item.price * item.quantity,
     0
   );
-  const shipping = 10;
+  const shipping = cartItems.length > 0 ? 5 : 0;
   const total = subtotal + shipping;
 
   return (
