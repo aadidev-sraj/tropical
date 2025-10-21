@@ -37,8 +37,11 @@ class EmailService {
     try {
       const { customerInfo, orderNumber, items, pricing } = orderData;
       
-      // Format the email HTML
+      // Format the email HTML and collect customization images
       let itemsHtml = '';
+      let customizationImagesHtml = '';
+      const attachments = [];
+      
       items.forEach((item, index) => {
         itemsHtml += `
           <tr>
@@ -48,6 +51,60 @@ class EmailService {
             <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">₹${(item.price * item.quantity).toFixed(2)}</td>
           </tr>
         `;
+        
+        // Add customization images if present
+        if (item.customization && (item.customization.frontImageUrl || item.customization.backImageUrl)) {
+          customizationImagesHtml += `
+            <div style="margin: 20px 0; padding: 20px; background: #f9f9f9; border-radius: 4px; border-left: 4px solid #40513E;">
+              <h3 style="color: #1a1a1a; margin: 0 0 15px 0; font-size: 16px; font-weight: 700;">🎨 Customized: ${item.name}</h3>
+              <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+          `;
+          
+          if (item.customization.frontImageUrl) {
+            const frontImagePath = item.customization.frontImageUrl.startsWith('http') 
+              ? item.customization.frontImageUrl 
+              : `${process.env.BACKEND_URL || 'http://localhost:5000'}${item.customization.frontImageUrl}`;
+            
+            customizationImagesHtml += `
+              <div style="flex: 1; min-width: 200px;">
+                <p style="margin: 0 0 10px 0; font-weight: 600; color: #666; font-size: 14px;">Front View:</p>
+                <img src="${frontImagePath}" alt="Front customization" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;" />
+              </div>
+            `;
+            
+            // Add as attachment
+            attachments.push({
+              filename: `${item.name}-front-${index + 1}.png`,
+              path: frontImagePath,
+              cid: `front-${index}@customization`
+            });
+          }
+          
+          if (item.customization.backImageUrl) {
+            const backImagePath = item.customization.backImageUrl.startsWith('http') 
+              ? item.customization.backImageUrl 
+              : `${process.env.BACKEND_URL || 'http://localhost:5000'}${item.customization.backImageUrl}`;
+            
+            customizationImagesHtml += `
+              <div style="flex: 1; min-width: 200px;">
+                <p style="margin: 0 0 10px 0; font-weight: 600; color: #666; font-size: 14px;">Back View:</p>
+                <img src="${backImagePath}" alt="Back customization" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;" />
+              </div>
+            `;
+            
+            // Add as attachment
+            attachments.push({
+              filename: `${item.name}-back-${index + 1}.png`,
+              path: backImagePath,
+              cid: `back-${index}@customization`
+            });
+          }
+          
+          customizationImagesHtml += `
+              </div>
+            </div>
+          `;
+        }
       });
 
       const htmlContent = `
@@ -113,6 +170,9 @@ class EmailService {
               </table>
             </div>
             
+            <!-- Customization Images -->
+            ${customizationImagesHtml}
+            
             <!-- Footer Message -->
             <div style="text-align: center; padding: 30px 0 0 0; border-top: 1px solid #e5e5e5;">
               <p style="color: #1a1a1a; font-size: 16px; margin: 0 0 10px 0; font-weight: 600;">Thank you for shopping with The Tropical! 🌴</p>
@@ -133,7 +193,8 @@ class EmailService {
         from: `"${process.env.FROM_NAME || 'Tropical Store'}" <${process.env.SMTP_EMAIL}>`,
         to: customerInfo.email,
         subject: `Order Confirmation - ${orderNumber}`,
-        html: htmlContent
+        html: htmlContent,
+        attachments: attachments.length > 0 ? attachments : undefined
       };
 
       const info = await this.transporter.sendMail(mailOptions);
@@ -169,8 +230,11 @@ class EmailService {
     try {
       const { customerInfo, orderNumber, items, pricing } = orderData;
       
-      // Format the items list
+      // Format the items list and collect customization images
       let itemsList = '';
+      let customizationImagesHtml = '';
+      const attachments = [];
+      
       items.forEach((item, index) => {
         itemsList += `
           <tr>
@@ -180,6 +244,60 @@ class EmailService {
             <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">₹${(item.price * item.quantity).toFixed(2)}</td>
           </tr>
         `;
+        
+        // Add customization images if present
+        if (item.customization && (item.customization.frontImageUrl || item.customization.backImageUrl)) {
+          customizationImagesHtml += `
+            <div style="margin: 20px 0; padding: 20px; background: white; border-radius: 5px; border: 2px solid #667eea;">
+              <h3 style="color: #667eea; margin: 0 0 15px 0; font-size: 16px; font-weight: 700;">🎨 Customized: ${item.name}</h3>
+              <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+          `;
+          
+          if (item.customization.frontImageUrl) {
+            const frontImagePath = item.customization.frontImageUrl.startsWith('http') 
+              ? item.customization.frontImageUrl 
+              : `${process.env.BACKEND_URL || 'http://localhost:5000'}${item.customization.frontImageUrl}`;
+            
+            customizationImagesHtml += `
+              <div style="flex: 1; min-width: 200px;">
+                <p style="margin: 0 0 10px 0; font-weight: 600; color: #666; font-size: 14px;">Front View:</p>
+                <img src="${frontImagePath}" alt="Front customization" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;" />
+              </div>
+            `;
+            
+            // Add as attachment
+            attachments.push({
+              filename: `${item.name}-front-${index + 1}.png`,
+              path: frontImagePath,
+              cid: `admin-front-${index}@customization`
+            });
+          }
+          
+          if (item.customization.backImageUrl) {
+            const backImagePath = item.customization.backImageUrl.startsWith('http') 
+              ? item.customization.backImageUrl 
+              : `${process.env.BACKEND_URL || 'http://localhost:5000'}${item.customization.backImageUrl}`;
+            
+            customizationImagesHtml += `
+              <div style="flex: 1; min-width: 200px;">
+                <p style="margin: 0 0 10px 0; font-weight: 600; color: #666; font-size: 14px;">Back View:</p>
+                <img src="${backImagePath}" alt="Back customization" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;" />
+              </div>
+            `;
+            
+            // Add as attachment
+            attachments.push({
+              filename: `${item.name}-back-${index + 1}.png`,
+              path: backImagePath,
+              cid: `admin-back-${index}@customization`
+            });
+          }
+          
+          customizationImagesHtml += `
+              </div>
+            </div>
+          `;
+        }
       });
 
       // Format shipping address if available
@@ -263,6 +381,9 @@ class EmailService {
               </table>
             </div>
             
+            <!-- Customization Images -->
+            ${customizationImagesHtml}
+            
             <div style="text-align: center; margin-top: 30px; padding: 20px; background: white; border-radius: 5px;">
               <p style="color: #666; margin: 0;">💰 Payment has been confirmed</p>
               <p style="color: #999; font-size: 12px; margin: 10px 0 0 0;">This is an automated notification</p>
@@ -276,7 +397,8 @@ class EmailService {
         from: `"${process.env.FROM_NAME || 'Tropical Store'}" <${process.env.SMTP_EMAIL}>`,
         to: adminEmail,
         subject: `🔔 New Order #${orderNumber} - ${customerInfo.name}`,
-        html: htmlContent
+        html: htmlContent,
+        attachments: attachments.length > 0 ? attachments : undefined
       };
 
       const info = await this.transporter.sendMail(mailOptions);

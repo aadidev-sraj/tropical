@@ -119,27 +119,45 @@ export default function Product() {
                 </div>
               )}
 
-              <div className="flex items-center gap-3">
-                <button
-                  className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-primary-foreground hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={product.sizes && product.sizes.length > 0 && !selectedSize}
-                  onClick={() => {
-                    if (product.sizes && product.sizes.length > 0 && !selectedSize) {
-                      alert('Please select a size');
-                      return;
-                    }
-                    addToCart({
-                      id: product._id ? parseInt(product._id) : 0,
-                      name: product.name,
-                      price: product.price,
-                      image: firstImageUrl(product as any),
-                      quantity: 1,
-                      size: selectedSize || undefined,
-                    });
-                  }}
-                >
-                  Add to Cart
-                </button>
+              {/* Customization Notice */}
+              {product.customizable && (
+                <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-md">
+                  <p className="text-sm text-blue-800 dark:text-blue-200">
+                    ✨ This product is available for customization! You can add your own photos and choose from admin-approved designs.
+                  </p>
+                </div>
+              )}
+
+              <div className="flex items-center gap-3 flex-wrap">
+                {product.customizable ? (
+                  <Link
+                    to={`/customize-product/${slug}`}
+                    className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-primary-foreground hover:opacity-90"
+                  >
+                    🎨 Customize This Product
+                  </Link>
+                ) : (
+                  <button
+                    className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-primary-foreground hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={product.sizes && product.sizes.length > 0 && !selectedSize}
+                    onClick={() => {
+                      if (product.sizes && product.sizes.length > 0 && !selectedSize) {
+                        alert('Please select a size');
+                        return;
+                      }
+                      addToCart({
+                        id: product._id ? parseInt(product._id) : 0,
+                        name: product.name,
+                        price: product.price,
+                        image: firstImageUrl(product as any),
+                        quantity: 1,
+                        size: selectedSize || undefined,
+                      });
+                    }}
+                  >
+                    Add to Cart
+                  </button>
+                )}
                 <Link
                   to="/cart"
                   className="inline-flex items-center rounded-md border px-4 py-2 hover:bg-accent"

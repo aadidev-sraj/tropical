@@ -30,7 +30,23 @@ const orderSchema = new mongoose.Schema({
       min: 1
     },
     size: String,
-    image: String
+    image: String,
+    customization: {
+      frontDesign: String,
+      backDesign: String,
+      frontDesignPos: {
+        x: Number,
+        y: Number
+      },
+      backDesignPos: {
+        x: Number,
+        y: Number
+      },
+      frontDesignSize: Number,
+      backDesignSize: Number,
+      frontImageUrl: String,
+      backImageUrl: String
+    }
   }],
   customerInfo: {
     name: {

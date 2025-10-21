@@ -11,10 +11,9 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Product from "./pages/Product";
 import Payment from "./pages/Payment";
-import Customize2D from "./pages/Customize2D_new";
 import CategoryPage from "./pages/CategoryPage";
 import CustomizableProducts from "./pages/CustomizableProducts";
-import CustomizeProductV2 from "./pages/CustomizeProduct_v2";
+import CustomizeProductV2 from "./pages/CustomizeProduct_new";
 
 const queryClient = new QueryClient();
 
@@ -37,9 +36,8 @@ const App = () => (
           <Route path="/products/jeans" element={<CategoryPage />} />
           <Route path="/products/hoodies" element={<CategoryPage />} />
           <Route path="/products/pants" element={<CategoryPage />} />
-          <Route path="/customize" element={<Customize2D />} />
-          <Route path="/customizable-products" element={<CustomizableProducts />} />
-          <Route path="/customize-v2/:slug" element={<CustomizeProductV2 />} />
+          <Route path="/customize" element={<CustomizableProducts />} />
+          <Route path="/customize-product/:slug" element={<CustomizeProductV2 />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

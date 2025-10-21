@@ -52,7 +52,7 @@ exports.getOne = async (req, res, next) => {
 // POST /api/products (Admin only)
 exports.create = async (req, res, next) => {
   try {
-    const { name, price, description, images, sizes, category } = req.body;
+    const { name, price, description, images, sizes, category, customizable } = req.body;
     
     if (!name || !price) {
       return res.status(400).json({ message: 'Name and price are required' });
@@ -73,7 +73,8 @@ exports.create = async (req, res, next) => {
       description: description || '',
       images: Array.isArray(images) ? images : [],
       sizes: Array.isArray(sizes) ? sizes : [],
-      category: category ? String(category).toLowerCase() : undefined
+      category: category ? String(category).toLowerCase() : undefined,
+      customizable: customizable === true || customizable === 'true'
     });
     
     await product.save();
@@ -87,7 +88,7 @@ exports.create = async (req, res, next) => {
 exports.update = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { name, price, description, images, sizes, category } = req.body;
+    const { name, price, description, images, sizes, category, customizable } = req.body;
     
     if (!mongoose.isValidObjectId(id)) {
       return res.status(400).json({ message: 'Invalid product ID' });
@@ -108,6 +109,7 @@ exports.update = async (req, res, next) => {
     if (images !== undefined) product.images = Array.isArray(images) ? images : [];
     if (sizes !== undefined) product.sizes = Array.isArray(sizes) ? sizes : [];
     if (category !== undefined) product.category = String(category).toLowerCase();
+    if (customizable !== undefined) product.customizable = customizable === true || customizable === 'true';
     
     await product.save();
     res.json({ data: product });

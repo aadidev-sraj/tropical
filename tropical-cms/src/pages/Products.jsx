@@ -27,11 +27,17 @@ function Products() {
 
   const fetchProducts = async () => {
     try {
+      console.log('Fetching products from API...');
       const response = await productsAPI.getAll();
+      console.log('Products API response:', response);
+      console.log('Products data:', response.data);
       setProducts(response.data.data || []);
+      setError('');
     } catch (error) {
       console.error('Error fetching products:', error);
-      setError('Failed to load products');
+      console.error('Error details:', error.response || error.message);
+      setError(`Failed to load products: ${error.message}`);
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -148,6 +154,12 @@ function Products() {
           + Add Product
         </button>
       </div>
+
+      {error && (
+        <div className="error" style={{ padding: '15px', marginBottom: '20px', backgroundColor: '#fee', border: '1px solid #fcc', borderRadius: '5px', color: '#c00' }}>
+          {error}
+        </div>
+      )}
 
       {products.length === 0 ? (
         <div className="empty-state">

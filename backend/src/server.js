@@ -25,17 +25,21 @@ const app = express();
 const rawOrigins =
   process.env.CORS_ALLOWED_ORIGINS ||
   process.env.FRONTEND_URL ||
-  'https://tropical-frontend.onrender.com, https://tropical-dl04.onrender.com';
+  'http://localhost:5173,http://localhost:8080,http://localhost:3000,http://localhost:5174,http://127.0.0.1:5173,http://127.0.0.1:8080,http://127.0.0.1:3000';
 
 const allowedOrigins = rawOrigins
   .split(',')
   .map((s) => s.trim())
   .filter(Boolean);
 
+console.log('CORS Allowed Origins:', allowedOrigins);
+
 const corsOptions = {
   origin: function (origin, callback) {
     // allow server-to-server/no-origin and exact matches from the allowlist
+    console.log('Request from origin:', origin);
     if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    console.error('CORS blocked origin:', origin);
     return callback(new Error('Not allowed by CORS'));
   },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],

@@ -37,7 +37,7 @@ export default function Payment() {
   }, []);
 
   const subtotal = useMemo(() => items.reduce((sum, it) => sum + it.price * it.quantity, 0), [items]);
-  const shipping = items.length > 0 ? 5 : 0;
+  const shipping = items.length > 0 ? 1 : 0;
   const total = subtotal + shipping;
 
   const handlePay = async () => {
@@ -114,7 +114,8 @@ export default function Payment() {
                 price: item.price,
                 quantity: item.quantity,
                 size: item.size,
-                image: item.image
+                image: item.image,
+                customization: item.customization
               })),
               customerInfo: {
                 name: customerInfo.name,

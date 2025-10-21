@@ -99,6 +99,32 @@ class PaymentController {
 
       // Payment verified successfully, create order in database
       if (orderData) {
+        // Generate composite images for customized items
+        const imageCompositeService = require('../services/image-composite.service');
+        
+        for (let item of orderData.items) {
+          if (item.customization && item.customization.productImages) {
+            try {
+              const compositeImages = await imageCompositeService.createCustomizationImages(
+                item.customization,
+                item.customization.productImages,
+                item.productId
+              );
+              
+              // Replace screenshot URLs with composite URLs
+              if (compositeImages.frontImageUrl) {
+                item.customization.frontImageUrl = compositeImages.frontImageUrl;
+              }
+              if (compositeImages.backImageUrl) {
+                item.customization.backImageUrl = compositeImages.backImageUrl;
+              }
+            } catch (error) {
+              console.error('Failed to generate composite images:', error);
+              // Continue with original images if composite fails
+            }
+          }
+        }
+        
         const order = new Order({
           user: req.user._id,
           items: orderData.items,

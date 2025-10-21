@@ -9,6 +9,8 @@ export type BackendProduct = {
   description?: string;
   images?: string[];
   sizes?: string[];
+  category?: string;
+  customizable?: boolean;
 };
 
 export async function listProducts() {

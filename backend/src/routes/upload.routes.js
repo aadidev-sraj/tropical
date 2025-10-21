@@ -5,7 +5,7 @@ const { protect, adminOnly } = require('../middleware/auth.middleware');
 const path = require('path');
 const fs = require('fs');
 
-// Upload single image
+// Upload single image (admin only)
 router.post('/single', protect, adminOnly, upload.single('image'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: 'No file uploaded' });
@@ -15,9 +15,55 @@ router.post('/single', protect, adminOnly, upload.single('image'), (req, res) =>
   const imageUrl = `/uploads/${req.file.filename}`;
   res.json({
     message: 'File uploaded successfully',
+    data: { url: imageUrl },
     url: imageUrl,
     filename: req.file.filename
   });
+});
+
+// Upload customization image (authenticated users)
+router.post('/customization', protect, upload.single('image'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ message: 'No file uploaded' });
+  }
+  
+  // Return the URL path to access the image
+  const imageUrl = `/uploads/${req.file.filename}`;
+  res.json({
+    message: 'Customization image uploaded successfully',
+    data: { url: imageUrl },
+    url: imageUrl,
+    filename: req.file.filename
+  });
+});
+
+// Generate composite image (authenticated users)
+router.post('/composite', protect, async (req, res) => {
+  try {
+    const imageCompositeService = require('../services/image-composite.service');
+    const { productImageUrl, designImageUrl, position, size, outputFilename } = req.body;
+    
+    if (!productImageUrl || !designImageUrl || !position || !size || !outputFilename) {
+      return res.status(400).json({ message: 'Missing required parameters' });
+    }
+    
+    const compositeUrl = await imageCompositeService.compositeImage({
+      productImageUrl,
+      designImageUrl,
+      position,
+      size,
+      outputFilename
+    });
+    
+    res.json({
+      message: 'Composite image created successfully',
+      data: { url: compositeUrl },
+      url: compositeUrl
+    });
+  } catch (error) {
+    console.error('Composite image error:', error);
+    res.status(500).json({ message: 'Failed to create composite image', error: error.message });
+  }
 });
 
 // Upload multiple images

@@ -6,6 +6,7 @@ import Products from './pages/Products';
 import Orders from './pages/Orders';
 import Featured from './pages/Featured';
 import Hero from './pages/Hero';
+import Designs from './pages/Designs';
 import Layout from './components/Layout';
 import './App.css';
 
@@ -61,6 +62,7 @@ function App() {
           <Route path="orders" element={<Orders />} />
           <Route path="featured" element={<Featured />} />
           <Route path="hero" element={<Hero />} />
+          <Route path="designs" element={<Designs />} />
         </Route>
       </Routes>
     </Router>

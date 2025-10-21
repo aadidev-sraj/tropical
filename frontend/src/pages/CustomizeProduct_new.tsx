@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import Navbar from "@/components/Navbar";
@@ -32,7 +32,8 @@ type Design = {
 export default function CustomizeProductV2() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const location = useLocation();
+  const previewRef = useRef<HTMLDivElement>(null);
   
   // Data state
   const [product, setProduct] = useState<Product | null>(null);
@@ -46,12 +47,12 @@ export default function CustomizeProductV2() {
   // Front customization
   const [frontDesign, setFrontDesign] = useState<Design | null>(null);
   const [frontDesignPos, setFrontDesignPos] = useState({ x: 50, y: 50 });
-  const [frontDesignSize, setFrontDesignSize] = useState(150);
+  const [frontDesignSize, setFrontDesignSize] = useState(200);
   
   // Back customization
   const [backDesign, setBackDesign] = useState<Design | null>(null);
   const [backDesignPos, setBackDesignPos] = useState({ x: 50, y: 50 });
-  const [backDesignSize, setBackDesignSize] = useState(150);
+  const [backDesignSize, setBackDesignSize] = useState(200);
   
   // Dragging state
   const [isDragging, setIsDragging] = useState(false);
@@ -92,112 +93,6 @@ export default function CustomizeProductV2() {
     if (slug) fetchData();
   }, [slug, navigate]);
 
-  // Render preview on canvas
-  useEffect(() => {
-    if (!product || !canvasRef.current) return;
-    
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Draw product base image
-    const productImage = new Image();
-    productImage.crossOrigin = "anonymous";
-    productImage.onload = () => {
-      ctx.drawImage(productImage, 0, 0, canvas.width, canvas.height);
-      
-      // Apply color tint
-      ctx.globalCompositeOperation = 'multiply';
-      ctx.fillStyle = productColor;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.globalCompositeOperation = 'source-over';
-      
-      // Get current view data
-      const currentPhoto = view === 'front' ? frontPhoto : backPhoto;
-      const currentDesign = view === 'front' ? frontDesign : backDesign;
-      
-      // Draw customer photo (background layer)
-      if (currentPhoto) {
-        const photoImage = new Image();
-        photoImage.crossOrigin = "anonymous";
-        photoImage.onload = () => {
-          const photoWidth = canvas.width * 0.6;
-          const photoHeight = canvas.height * 0.6;
-          const x = (canvas.width - photoWidth) / 2;
-          const y = (canvas.height - photoHeight) / 2;
-          ctx.drawImage(photoImage, x, y, photoWidth, photoHeight);
-          
-          // Draw admin design on top of photo
-          if (currentDesign) {
-            const designImage = new Image();
-            designImage.crossOrigin = "anonymous";
-            designImage.onload = () => {
-              const designWidth = canvas.width * 0.4;
-              const designHeight = canvas.height * 0.4;
-              const dx = (canvas.width - designWidth) / 2;
-              const dy = (canvas.height - designHeight) / 2;
-              ctx.drawImage(designImage, dx, dy, designWidth, designHeight);
-            };
-            designImage.src = toImageUrl(currentDesign.imageUrl) || currentDesign.imageUrl;
-          }
-        };
-        photoImage.src = currentPhoto;
-      } else if (currentDesign) {
-        // Draw selected design only (no photo)
-        const designImage = new Image();
-        designImage.crossOrigin = "anonymous";
-        designImage.onload = () => {
-          const designWidth = canvas.width * 0.5;
-          const designHeight = canvas.height * 0.5;
-          const x = (canvas.width - designWidth) / 2;
-          const y = (canvas.height - designHeight) / 2;
-          ctx.drawImage(designImage, x, y, designWidth, designHeight);
-        };
-        designImage.src = toImageUrl(currentDesign.imageUrl) || currentDesign.imageUrl;
-      }
-    };
-    
-    const baseImage = product.images?.[0];
-    if (baseImage) {
-      productImage.src = toImageUrl(baseImage) || baseImage;
-    } else {
-      // Fallback: draw colored rectangle
-      ctx.fillStyle = productColor;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
-  }, [product, productColor, view, frontPhoto, backPhoto, frontDesign, backDesign]);
-
-  // Handle photo upload
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please upload an image file");
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image size should be less than 5MB");
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const imageUrl = event.target?.result as string;
-      if (view === 'front') {
-        setFrontPhoto(imageUrl);
-      } else {
-        setBackPhoto(imageUrl);
-      }
-      toast.success(`Photo uploaded for ${view} side!`);
-    };
-    reader.readAsDataURL(file);
-  };
-
   // Handle design selection
   const handleDesignSelect = (design: Design) => {
     if (view === 'front') {
@@ -206,6 +101,77 @@ export default function CustomizeProductV2() {
       setBackDesign(design);
     }
     toast.success(`Design "${design.name}" applied to ${view} side`);
+  };
+
+  // Handle mouse move for dragging
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDragging || !previewRef.current) return;
+    
+    const rect = previewRef.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    
+    if (view === 'front') {
+      setFrontDesignPos({ x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) });
+    } else {
+      setBackDesignPos({ x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // Capture screenshot of current view
+  const captureScreenshot = async (): Promise<string> => {
+    if (!previewRef.current) return '';
+    
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const canvas = await html2canvas(previewRef.current, {
+        backgroundColor: null,
+        scale: 2,
+        logging: false,
+      });
+      return canvas.toDataURL('image/png');
+    } catch (error) {
+      console.error('Screenshot capture error:', error);
+      return '';
+    }
+  };
+
+  // Upload screenshot to server
+  const uploadScreenshot = async (dataUrl: string, viewType: 'front' | 'back'): Promise<string> => {
+    try {
+      // Convert data URL to blob
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
+      
+      // Create form data
+      const formData = new FormData();
+      formData.append('image', blob, `customization-${viewType}-${Date.now()}.png`);
+      
+      // Upload to server using fetch directly (not apiFetch)
+      const token = getToken();
+      const headers: HeadersInit = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      
+      const uploadRes = await fetch(`${import.meta.env.VITE_API_BASE || 'http://localhost:5000/api'}/upload/customization`, {
+        method: 'POST',
+        body: formData,
+        headers, // Don't set Content-Type - let browser handle it for FormData
+      });
+      
+      if (!uploadRes.ok) {
+        throw new Error('Upload failed');
+      }
+      
+      const uploadData = await uploadRes.json();
+      return uploadData.data.url;
+    } catch (error) {
+      console.error('Screenshot upload error:', error);
+      throw error;
+    }
   };
 
   // Handle add to cart
@@ -218,6 +184,12 @@ export default function CustomizeProductV2() {
       return;
     }
     
+    // Validate at least one design is selected
+    if (!frontDesign && !backDesign) {
+      toast.error("Please select at least one design");
+      return;
+    }
+    
     try {
       setIsProcessing(true);
       const isAuthed = !!getToken();
@@ -227,32 +199,59 @@ export default function CustomizeProductV2() {
         return;
       }
       
-      // Capture canvas as preview
-      let previewUrl = "";
-      if (canvasRef.current) {
-        previewUrl = canvasRef.current.toDataURL('image/png');
+      toast.info("Capturing customization images...");
+      
+      // Capture screenshots for both views
+      let frontImageUrl = '';
+      let backImageUrl = '';
+      
+      // Capture front view if design exists
+      if (frontDesign) {
+        setView('front');
+        await new Promise(resolve => setTimeout(resolve, 100)); // Wait for render
+        const frontDataUrl = await captureScreenshot();
+        if (frontDataUrl) {
+          frontImageUrl = await uploadScreenshot(frontDataUrl, 'front');
+        }
+      }
+      
+      // Capture back view if design exists
+      if (backDesign) {
+        setView('back');
+        await new Promise(resolve => setTimeout(resolve, 100)); // Wait for render
+        const backDataUrl = await captureScreenshot();
+        if (backDataUrl) {
+          backImageUrl = await uploadScreenshot(backDataUrl, 'back');
+        }
       }
       
       // Calculate price
       let price = product.price;
-      if (frontPhoto || backPhoto) price += 150; // Customer photos
-      if (frontDesign) price += 100; // Front design
-      if (backDesign) price += 100; // Back design
+      if (frontDesign) price += 0; // Front design
+      if (backDesign) price += 0; // Back design
       
       addToCart({
         id: parseInt(product._id) || 0,
         name: `${product.name} (Customized)`,
         price,
         quantity: 1,
-        image: previewUrl || toImageUrl(product.images?.[0]) || "",
+        image: frontImageUrl || backImageUrl || toImageUrl(product.images?.[0]) || "",
         size: selectedSize || undefined,
         customization: {
-          color: productColor,
-          frontPhoto,
-          backPhoto,
           frontDesign: frontDesign?._id,
           backDesign: backDesign?._id,
-          previewUrl,
+          frontDesignPos,
+          backDesignPos,
+          frontDesignSize,
+          backDesignSize,
+          frontImageUrl,
+          backImageUrl,
+          frontDesignImageUrl: frontDesign?.imageUrl,
+          backDesignImageUrl: backDesign?.imageUrl,
+          productImages: {
+            front: toImageUrl(product.images?.[0]),
+            back: toImageUrl(product.images?.[1] || product.images?.[0])
+          }
         },
       });
       
@@ -289,7 +288,18 @@ export default function CustomizeProductV2() {
     );
   }
 
-  const hasAnyCustomization = frontPhoto || backPhoto || frontDesign || backDesign;
+  const currentDesign = view === 'front' ? frontDesign : backDesign;
+  const currentDesignImage = currentDesign ? toImageUrl(currentDesign.imageUrl) : null;
+  const currentDesignPos = view === 'front' ? frontDesignPos : backDesignPos;
+  const currentDesignSize = view === 'front' ? frontDesignSize : backDesignSize;
+  
+  // Get product image - front (first image) or back (second image)
+  const productImage = view === 'front' 
+    ? (product.images?.[0] ? toImageUrl(product.images[0]) : null)
+    : (product.images?.[1] ? toImageUrl(product.images[1]) : product.images?.[0] ? toImageUrl(product.images[0]) : null);
+
+  // Reverse size order
+  const reversedSizes = product.sizes ? [...product.sizes].reverse() : [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -298,7 +308,7 @@ export default function CustomizeProductV2() {
       <div className="max-w-7xl mx-auto px-4 py-8 pt-24">
         <h1 className="text-4xl font-bold mb-2">Customize {product.name}</h1>
         <p className="text-muted-foreground mb-8">
-          Upload your own photos and choose from admin-approved designs
+          Choose from admin-approved designs and position them on your product
         </p>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -323,64 +333,70 @@ export default function CustomizeProductV2() {
                 </Button>
               </div>
 
-              {/* Canvas Preview */}
-              <div className="flex justify-center items-center bg-muted/20 rounded-lg p-8" style={{ minHeight: "500px" }}>
-                <canvas
-                  ref={canvasRef}
-                  width={600}
-                  height={700}
-                  className="max-w-full h-auto border rounded shadow-sm"
-                />
+              {/* Product Preview */}
+              <div 
+                ref={previewRef}
+                className="relative flex justify-center items-center bg-muted/20 rounded-lg p-8 select-none"
+                style={{ minHeight: "600px" }}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+              >
+                {/* Product Image */}
+                {productImage && (
+                  <img 
+                    src={productImage} 
+                    alt={`${product.name} ${view}`}
+                    className="max-w-full h-auto"
+                    style={{ 
+                      maxHeight: "600px",
+                      objectFit: "contain",
+                      display: "block"
+                    }}
+                    draggable={false}
+                  />
+                )}
+                
+                {/* Design Overlay */}
+                {currentDesignImage && (
+                  <img
+                    src={currentDesignImage}
+                    alt="Design"
+                    className="absolute cursor-move"
+                    style={{
+                      left: `${currentDesignPos.x}%`,
+                      top: `${currentDesignPos.y}%`,
+                      transform: 'translate(-50%, -50%)',
+                      width: `${currentDesignSize}px`,
+                      height: 'auto',
+                      pointerEvents: isDragging ? 'none' : 'auto',
+                      border: '2px dashed rgba(59, 130, 246, 0.5)',
+                      padding: '4px',
+                      zIndex: 10,
+                    }}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      setIsDragging(true);
+                    }}
+                    draggable={false}
+                  />
+                )}
               </div>
               
-              {/* Status Info */}
-              <div className="mt-4 text-sm text-muted-foreground text-center space-y-1">
-                <p>
-                  <strong>{view === 'front' ? 'Front' : 'Back'} Side:</strong>{' '}
-                  {view === 'front' 
-                    ? (frontPhoto ? '✓ Photo uploaded' : 'No photo') + ' • ' + (frontDesign ? `✓ ${frontDesign.name}` : 'No design')
-                    : (backPhoto ? '✓ Photo uploaded' : 'No photo') + ' • ' + (backDesign ? `✓ ${backDesign.name}` : 'No design')
-                  }
-                </p>
-              </div>
+              <p className="text-sm text-muted-foreground mt-4 text-center">
+                💡 {currentDesign ? 'Click and drag the design to reposition it' : 'Select a design to get started'}
+              </p>
             </div>
           </div>
 
           {/* Controls Section */}
           <div className="space-y-6">
-            {/* Product Color */}
-            <div className="bg-card p-6 rounded-lg shadow">
-              <h3 className="font-semibold text-lg mb-4">Product Color</h3>
-              <div className="space-y-3">
-                <div
-                  className="w-full h-12 rounded border-2 cursor-pointer"
-                  style={{ backgroundColor: productColor }}
-                  onClick={() => setShowColorPicker(!showColorPicker)}
-                />
-                {showColorPicker && (
-                  <div className="mt-2">
-                    <HexColorPicker color={productColor} onChange={setProductColor} />
-                  </div>
-                )}
-                <div className="flex gap-2 flex-wrap">
-                  {["#ffffff", "#000000", "#ff0000", "#0000ff", "#00ff00", "#ffff00", "#ff69b4", "#8b4513"].map((c) => (
-                    <button
-                      key={c}
-                      className="w-8 h-8 rounded border-2 hover:scale-110 transition"
-                      style={{ backgroundColor: c }}
-                      onClick={() => setProductColor(c)}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-
             {/* Size Selection */}
-            {product.sizes && product.sizes.length > 0 && (
+            {reversedSizes.length > 0 && (
               <div className="bg-card p-6 rounded-lg shadow">
                 <h3 className="font-semibold text-lg mb-4">Select Size *</h3>
                 <div className="flex gap-2 flex-wrap">
-                  {product.sizes.map((size) => (
+                  {reversedSizes.map((size) => (
                     <button
                       key={size}
                       onClick={() => setSelectedSize(size)}
@@ -400,62 +416,11 @@ export default function CustomizeProductV2() {
               </div>
             )}
 
-            {/* Photo Upload */}
-            <div className="bg-card p-6 rounded-lg shadow">
-              <h3 className="font-semibold text-lg mb-4">
-                📸 Upload Your Photo ({view === 'front' ? 'Front' : 'Back'})
-              </h3>
-              <div className="space-y-3">
-                <div>
-                  <Label>Upload Personal Photo (Optional)</Label>
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={handlePhotoUpload}
-                    disabled={isProcessing}
-                    className="cursor-pointer"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Max 5MB • Your photo will appear as background
-                  </p>
-                </div>
-                {(view === 'front' ? frontPhoto : backPhoto) && (
-                  <div className="flex items-center gap-2">
-                    <div className="w-16 h-16 border rounded overflow-hidden">
-                      <img 
-                        src={view === 'front' ? frontPhoto! : backPhoto!} 
-                        alt="Uploaded" 
-                        className="w-full h-full object-cover" 
-                      />
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => {
-                        if (view === 'front') {
-                          setFrontPhoto(null);
-                          toast.success('Front photo removed');
-                        } else {
-                          setBackPhoto(null);
-                          toast.success('Back photo removed');
-                        }
-                      }}
-                    >
-                      Remove Photo
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </div>
-
             {/* Admin Design Selection */}
             <div className="bg-card p-6 rounded-lg shadow">
               <h3 className="font-semibold text-lg mb-4">
-                🎨 Admin Designs ({view === 'front' ? 'Front' : 'Back'})
+                🎨 Select Design ({view === 'front' ? 'Front' : 'Back'})
               </h3>
-              <p className="text-xs text-muted-foreground mb-3">
-                Choose from approved designs (Optional)
-              </p>
               {designs.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No designs available</p>
               ) : (
@@ -475,13 +440,13 @@ export default function CustomizeProductV2() {
                         <img
                           src={toImageUrl(design.imageUrl) || design.imageUrl}
                           alt={design.name}
-                          className="w-full h-20 object-cover rounded mb-1"
+                          className="w-full h-20 object-contain rounded mb-1 bg-white"
                         />
                         <p className="text-xs font-medium truncate">{design.name}</p>
                       </div>
                     ))}
                   </div>
-                  {(view === 'front' && frontDesign) || (view === 'back' && backDesign) ? (
+                  {currentDesign && (
                     <Button
                       size="sm"
                       variant="outline"
@@ -498,10 +463,35 @@ export default function CustomizeProductV2() {
                     >
                       Remove {view} Design
                     </Button>
-                  ) : null}
+                  )}
                 </div>
               )}
             </div>
+
+            {/* Design Size Control */}
+            {currentDesign && (
+              <div className="bg-card p-6 rounded-lg shadow">
+                <h3 className="font-semibold text-lg mb-4">Design Size</h3>
+                <div>
+                  <Label>Size: {currentDesignSize}px</Label>
+                  <input
+                    type="range"
+                    min="50"
+                    max="400"
+                    value={currentDesignSize}
+                    onChange={(e) => {
+                      const newSize = Number(e.target.value);
+                      if (view === 'front') {
+                        setFrontDesignSize(newSize);
+                      } else {
+                        setBackDesignSize(newSize);
+                      }
+                    }}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+            )}
 
             {/* Pricing & Add to Cart */}
             <div className="bg-card p-6 rounded-lg shadow">
@@ -511,12 +501,6 @@ export default function CustomizeProductV2() {
                   <span>Base Product</span>
                   <span>₹{product.price}</span>
                 </div>
-                {(frontPhoto || backPhoto) && (
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>+ Personal Photo{(frontPhoto && backPhoto) ? 's' : ''}</span>
-                    <span>₹150</span>
-                  </div>
-                )}
                 {frontDesign && (
                   <div className="flex justify-between text-muted-foreground">
                     <span>+ Front Design</span>
@@ -532,10 +516,7 @@ export default function CustomizeProductV2() {
                 <div className="flex justify-between font-bold text-lg border-t pt-2">
                   <span>Total</span>
                   <span>
-                    ₹{product.price + 
-                      ((frontPhoto || backPhoto) ? 150 : 0) + 
-                      (frontDesign ? 100 : 0) + 
-                      (backDesign ? 100 : 0)}
+                    ₹{product.price + (frontDesign ? 100 : 0) + (backDesign ? 100 : 0)}
                   </span>
                 </div>
               </div>
@@ -543,16 +524,16 @@ export default function CustomizeProductV2() {
                 className="w-full"
                 size="lg"
                 onClick={handleAddToCart}
-                disabled={isProcessing || !hasAnyCustomization || (product.sizes && product.sizes.length > 0 && !selectedSize)}
+                disabled={isProcessing || (!frontDesign && !backDesign) || (reversedSizes.length > 0 && !selectedSize)}
               >
                 {isProcessing ? "Processing..." : "Add to Cart"}
               </Button>
-              {!hasAnyCustomization && (
+              {!frontDesign && !backDesign && (
                 <p className="text-xs text-muted-foreground mt-2 text-center">
-                  Upload a photo or select a design to continue
+                  Select at least one design to continue
                 </p>
               )}
-              {product.sizes && product.sizes.length > 0 && !selectedSize && hasAnyCustomization && (
+              {reversedSizes.length > 0 && !selectedSize && (frontDesign || backDesign) && (
                 <p className="text-xs text-red-500 mt-2 text-center">
                   Please select a size
                 </p>
