@@ -20,12 +20,20 @@ const contactRoutes = require('./routes/contact.routes');
 const app = express();
 
 // Middleware
-const allowedOrigins = [
-  process.env.FRONTEND_URL || 'https://tropical-frontend.onrender.com',
-];
+// Allow multiple origins via env (comma-separated)
+const rawOrigins =
+  process.env.CORS_ALLOWED_ORIGINS ||
+  process.env.FRONTEND_URL ||
+  'https://tropical-frontend.onrender.com';
+
+const allowedOrigins = rawOrigins
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
 
 const corsOptions = {
   origin: function (origin, callback) {
+    // allow server-to-server/no-origin and exact matches from the allowlist
     if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
     return callback(new Error('Not allowed by CORS'));
   },
