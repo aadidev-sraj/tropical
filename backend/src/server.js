@@ -20,7 +20,23 @@ const contactRoutes = require('./routes/contact.routes');
 const app = express();
 
 // Middleware
-app.use(cors());
+const allowedOrigins = [
+  process.env.FRONTEND_URL || 'https://tropical-frontend.onrender.com',
+];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error('Not allowed by CORS'));
+  },
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(express.json());
 app.use(morgan('dev'));
 
