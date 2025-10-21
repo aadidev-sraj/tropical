@@ -24,7 +24,7 @@ const app = express();
 const rawOrigins =
   process.env.CORS_ALLOWED_ORIGINS ||
   process.env.FRONTEND_URL ||
-  'https://tropical-frontend.onrender.com';
+  'https://tropical-frontend.onrender.com, https://tropical-dl04.onrender.com';
 
 const allowedOrigins = rawOrigins
   .split(',')
