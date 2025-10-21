@@ -381,11 +381,11 @@ export default function CustomizeProduct() {
                 >
                   <img 
                     src={
-                      view === 'back' && product.images?.[1] 
-                        ? product.images[1] 
-                        : product.images?.[0] || "/placeholder-tshirt.png"
+                      view === 'back'
+                        ? (product.images?.[1] || product.images?.[0] || "/placeholder-tshirt.png")
+                        : (product.images?.[0] || "/placeholder-tshirt.png")
                     }
-                    alt={`${product.name} - ${view}`}
+                    alt={product.name}
                     className="max-w-full h-auto"
                     style={{ 
                       maxHeight: "600px",

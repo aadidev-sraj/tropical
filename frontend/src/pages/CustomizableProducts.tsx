@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, toImageUrl } from "@/lib/api";
 import type { BackendProduct } from "@/lib/products";
 
 export default function CustomizableProducts() {
@@ -23,8 +23,8 @@ export default function CustomizableProducts() {
         
         // Filter only customizable products
         const customizable = allProducts.filter(p => {
-          console.log(`Product ${p.name}: isCustomizable =`, p.isCustomizable);
-          return p.isCustomizable === true;
+          console.log(`Product ${p.name}: customizable =`, (p as any).customizable);
+          return (p as any).customizable === true;
         });
         
         console.log('Customizable products:', customizable);
@@ -49,7 +49,7 @@ export default function CustomizableProducts() {
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-4">Customize Your Products</h1>
           <p className="text-muted-foreground text-lg">
-            Choose a product below to start customizing with your own designs, text, and colors
+            Choose a product below to customize with admin-uploaded designs
           </p>
         </div>
 
@@ -87,7 +87,7 @@ export default function CustomizableProducts() {
                 <div className="aspect-square bg-muted relative overflow-hidden">
                   {product.images && product.images.length > 0 ? (
                     <img
-                      src={product.images[0]}
+                      src={toImageUrl(product.images[0]) || product.images[0]}
                       alt={product.name}
                       className="w-full h-full object-cover"
                     />
@@ -112,19 +112,13 @@ export default function CustomizableProducts() {
                       <p className="text-sm text-muted-foreground">Starting from</p>
                       <p className="text-2xl font-bold">₹{product.price}</p>
                     </div>
-                    {product.customizationOptions && (
-                      <div className="text-xs text-muted-foreground text-right">
-                        {product.customizationOptions.allowPhotoUpload && (
-                          <div>✓ Photo Upload</div>
-                        )}
-                        {product.customizationOptions.allowText && (
-                          <div>✓ Custom Text</div>
-                        )}
-                      </div>
-                    )}
+                    <div className="text-xs text-muted-foreground text-right">
+                      <div>✓ Admin Designs</div>
+                      <div>✓ Color Options</div>
+                    </div>
                   </div>
                   
-                  <Link to={`/customize/${product.slug}`}>
+                  <Link to={`/customize-v2/${product.slug}`}>
                     <Button className="w-full" size="lg">
                       Start Customizing →
                     </Button>

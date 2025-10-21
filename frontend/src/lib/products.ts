@@ -1,4 +1,4 @@
-import { apiFetch } from "./api";
+import { apiFetch, toImageUrl } from "./api";
 
 export type BackendProduct = {
   _id?: string;
@@ -32,5 +32,5 @@ export async function getProduct(idOrSlug: string | number) {
 
 export function firstImageUrl(p?: BackendProduct | null): string | undefined {
   const u = p?.images && p.images[0];
-  return u || undefined;
+  return toImageUrl(u);
 }

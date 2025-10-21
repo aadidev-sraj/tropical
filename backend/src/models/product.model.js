@@ -18,6 +18,10 @@ const ProductSchema = new mongoose.Schema(
       default: 'other',
       lowercase: true
     },
+    customizable: {
+      type: Boolean,
+      default: false
+    },
   },
   { timestamps: true }
 );

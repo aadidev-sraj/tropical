@@ -15,7 +15,8 @@ function Products() {
     description: '',
     images: [],
     sizes: [],
-    category: 'other'
+    category: 'other',
+    customizable: false
   });
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
@@ -37,8 +38,8 @@ function Products() {
   };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
   const handleImageUpload = async (e) => {
@@ -103,7 +104,8 @@ function Products() {
       description: product.description || '',
       images: product.images || [],
       sizes: product.sizes || [],
-      category: product.category || 'other'
+      category: product.category || 'other',
+      customizable: product.customizable || false
     });
     setShowModal(true);
   };
@@ -122,7 +124,7 @@ function Products() {
 
   const openModal = () => {
     setEditingProduct(null);
-    setFormData({ name: '', price: '', description: '', images: [], sizes: [], category: 'other' });
+    setFormData({ name: '', price: '', description: '', images: [], sizes: [], category: 'other', customizable: false });
     setShowModal(true);
     setError('');
   };
@@ -130,7 +132,7 @@ function Products() {
   const closeModal = () => {
     setShowModal(false);
     setEditingProduct(null);
-    setFormData({ name: '', price: '', description: '', images: [], sizes: [], category: 'other' });
+    setFormData({ name: '', price: '', description: '', images: [], sizes: [], category: 'other', customizable: false });
     setError('');
   };
 
@@ -166,6 +168,9 @@ function Products() {
                 <h3>{product.name}</h3>
                 <p className="product-price">₹{product.price}</p>
                 <p className="product-description">{product.description}</p>
+                {product.customizable && (
+                  <span className="badge badge-success">Customizable</span>
+                )}
               </div>
               <div className="product-actions">
                 <button onClick={() => handleEdit(product)} className="btn btn-secondary">
@@ -245,6 +250,18 @@ function Products() {
                   <option value="pants">Pants</option>
                   <option value="other">Other</option>
                 </select>
+              </div>
+
+              <div className="form-group">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    name="customizable"
+                    checked={formData.customizable}
+                    onChange={handleInputChange}
+                  />
+                  <span>Allow Customization (users can add admin designs)</span>
+                </label>
               </div>
 
               <div className="form-group">

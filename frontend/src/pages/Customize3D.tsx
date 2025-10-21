@@ -11,7 +11,7 @@ import { HexColorPicker } from "react-colorful";
 import { toast } from "sonner";
 import { addToCart } from "@/lib/cart";
 import { useNavigate, useLocation } from "react-router-dom";
-import { apiFetch, getToken } from "@/lib/api";
+import { apiFetch, getToken, toImageUrl } from "@/lib/api";
 
 // Draggable element component
 function DraggableElement({ position, onDrag, children, scale = 1 }: any) {
@@ -394,17 +394,18 @@ export default function Customize3D() {
       
       // Upload to backend for storage
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("image", file);
       
-      const response = await fetch(`${import.meta.env.VITE_API_BASE || 'http://localhost:5000/api'}/upload`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE || 'http://localhost:5000/api'}/upload/single`, {
         method: "POST",
+        headers: getToken() ? { Authorization: `Bearer ${getToken()}` } : undefined,
         body: formData,
       });
 
       if (!response.ok) throw new Error("Upload failed");
       
       const data = await response.json();
-      setUploadedImage(data.url);
+      setUploadedImage(toImageUrl(data.url) || data.url);
       
     } catch (error: any) {
       console.error("Upload error:", error);
@@ -424,12 +425,13 @@ export default function Customize3D() {
             const formData = new FormData();
             formData.append("file", blob, "preview.png");
             
-            fetch(`${import.meta.env.VITE_API_BASE || 'http://localhost:5000/api'}/upload`, {
+            fetch(`${import.meta.env.VITE_API_BASE || 'http://localhost:5000/api'}/upload/single`, {
               method: "POST",
+              headers: getToken() ? { Authorization: `Bearer ${getToken()}` } : undefined,
               body: formData,
             })
               .then((res) => res.json())
-              .then((data) => resolve(data.url))
+              .then((data) => resolve(toImageUrl(data.url) || data.url))
               .catch(() => resolve(""));
           } else {
             resolve("");

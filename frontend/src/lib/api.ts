@@ -31,3 +31,11 @@ export async function apiFetch<T = any>(path: string, options: RequestInit = {})
   }
   return res.json();
 }
+
+// Convert relative image URLs from backend (e.g. /uploads/xyz.png) to absolute
+export function toImageUrl(u?: string) {
+  if (!u) return undefined;
+  if (/^https?:\/\//i.test(u)) return u;
+  const origin = API_BASE.replace(/\/api\/?$/, '');
+  return u.startsWith('/') ? origin + u : origin + '/' + u;
+}
