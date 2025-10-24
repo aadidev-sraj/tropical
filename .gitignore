@@ -33,8 +33,9 @@ lerna-debug.log*
 pnpm-debug.log*
 
 # Uploads Directory (contains user uploaded files)
-backend/uploads/
-**/uploads/
+# REMOVED: Now tracking uploads folder so images persist in deployment
+# backend/uploads/
+# **/uploads/
 
 # IDE & Editor Files
 .vscode/
