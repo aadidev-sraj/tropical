@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { featuredAPI, uploadAPI } from '../utils/api';
+import { featuredAPI, uploadAPI, toImageUrl } from '../utils/api';
 import './Featured.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -39,7 +39,8 @@ function Featured() {
     setUploading(true);
     try {
       const response = await uploadAPI.multiple(files);
-      const imageUrls = response.data.urls.map(url => `${API_URL}${url}`);
+      // Store relative paths, not absolute URLs
+      const imageUrls = response.data.urls;
       setFormData(prev => ({
         ...prev,
         images: [...prev.images, ...imageUrls]
@@ -223,7 +224,7 @@ function Featured() {
                 <div className="image-preview">
                   {formData.images.map((img, index) => (
                     <div key={index} className="preview-item">
-                      <img src={img} alt={`Preview ${index + 1}`} />
+                      <img src={toImageUrl(img)} alt={`Preview ${index + 1}`} />
                       <button
                         type="button"
                         onClick={() => removeImage(index)}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { heroAPI, uploadAPI } from '../utils/api';
+import { heroAPI, uploadAPI, toImageUrl } from '../utils/api';
 import './Hero.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -51,7 +51,8 @@ function Hero() {
     setUploading(true);
     try {
       const response = await uploadAPI.single(file);
-      const imageUrl = `${API_URL}${response.data.url}`;
+      // Store relative path, not absolute URL
+      const imageUrl = response.data.url;
       setFormData(prev => ({
         ...prev,
         backgroundImage: imageUrl
@@ -162,15 +163,15 @@ function Hero() {
             <div key={hero._id} className="hero-card">
               <div className="hero-preview">
                 {hero.backgroundImage ? (
-                  <img src={hero.backgroundImage} alt={hero.title} />
+                  <img src={toImageUrl(hero.backgroundImage)} alt={hero.title} />
                 ) : (
                   <div className="no-image">No Background Image</div>
                 )}
-                <div className="hero-overlay">
-                  <h2>{hero.title}</h2>
-                  {hero.subtitle && <p>{hero.subtitle}</p>}
-                  <button className="preview-btn">{hero.buttonText}</button>
-                </div>
+              </div>
+              <div className="hero-overlay">
+                <h2>{hero.title}</h2>
+                {hero.subtitle && <p>{hero.subtitle}</p>}
+                <button className="preview-btn">{hero.buttonText}</button>
               </div>
               <div className="hero-info">
                 <div className="hero-meta">
@@ -261,7 +262,7 @@ function Hero() {
                 {uploading && <p>Uploading...</p>}
                 {formData.backgroundImage && (
                   <div className="image-preview">
-                    <img src={formData.backgroundImage} alt="Background preview" />
+                    <img src={toImageUrl(formData.backgroundImage)} alt="Background preview" />
                   </div>
                 )}
               </div>

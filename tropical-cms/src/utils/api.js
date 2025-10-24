@@ -95,3 +95,10 @@ export const heroAPI = {
   update: (id, data) => api.put(`/hero/${id}`, data),
   delete: (id) => api.delete(`/hero/${id}`),
 };
+
+// Convert relative image URLs from backend (e.g. /uploads/xyz.png) to absolute
+export function toImageUrl(u) {
+  if (!u) return undefined;
+  if (/^https?:\/\//i.test(u)) return u;
+  return u.startsWith('/') ? API_URL + u : API_URL + '/' + u;
+}

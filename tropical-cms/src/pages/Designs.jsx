@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { uploadAPI } from '../utils/api';
+import { uploadAPI, toImageUrl } from '../utils/api';
 import './Products.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -75,7 +75,8 @@ function Designs() {
     setUploading(true);
     try {
       const response = await uploadAPI.single(file);
-      const imageUrl = `${API_URL}${response.data.url}`;
+      // Store relative path, not absolute URL
+      const imageUrl = response.data.url;
       setFormData(prev => ({ ...prev, imageUrl }));
     } catch (error) {
       console.error('Error uploading image:', error);
@@ -211,7 +212,7 @@ function Designs() {
             <div key={design._id} className="product-card">
               <div className="product-image">
                 {design.imageUrl ? (
-                  <img src={design.imageUrl} alt={design.name} />
+                  <img src={toImageUrl(design.imageUrl)} alt={design.name} />
                 ) : (
                   <div className="no-image">No Image</div>
                 )}
