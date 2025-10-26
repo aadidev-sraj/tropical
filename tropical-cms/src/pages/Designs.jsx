@@ -342,7 +342,7 @@ function Designs() {
                 {formData.imageUrl && (
                   <div className="image-preview">
                     <div className="preview-item">
-                      <img src={formData.imageUrl} alt="Design preview" />
+                      <img src={toImageUrl(formData.imageUrl)} alt="Design preview" />
                     </div>
                   </div>
                 )}

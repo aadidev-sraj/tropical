@@ -157,7 +157,7 @@ function Featured() {
                 {item.images && item.images.length > 0 ? (
                   <div className="image-carousel">
                     {item.images.map((img, index) => (
-                      <img key={index} src={img} alt={`Wheel item ${index + 1}`} />
+                      <img key={index} src={toImageUrl(img)} alt={`Wheel item ${index + 1}`} />
                     ))}
                   </div>
                 ) : (
