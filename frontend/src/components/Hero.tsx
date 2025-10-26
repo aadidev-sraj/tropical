@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
  
 import { Button } from "./ui/button";
 import heroImage from "@/assets/hero-fashion.jpg";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, toImageUrl } from "@/lib/api";
 
 type HeroData = {
   title: string;
@@ -28,7 +28,8 @@ const Hero = () => {
         if (response?.data) {
           setHeroData(response.data);
           if (response.data.backgroundImage) {
-            setBackgroundImage(response.data.backgroundImage);
+            const absoluteUrl = toImageUrl(response.data.backgroundImage);
+            setBackgroundImage(absoluteUrl || response.data.backgroundImage);
           }
         }
       })

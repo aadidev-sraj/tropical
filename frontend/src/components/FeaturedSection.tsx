@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { listFeatured } from "@/lib/featured";
+import { toImageUrl } from "@/lib/api";
 
 const FeaturedSection = () => {
   const { data } = useQuery({
@@ -12,8 +13,10 @@ const FeaturedSection = () => {
 
   const items = data?.data || [];
   
-  // Flatten all images from all featured entries
-  const allImages = items.flatMap((item) => item.images || []);
+  // Flatten all images from all featured entries and convert to absolute URLs
+  const allImages = items.flatMap((item) => 
+    (item.images || []).map(img => toImageUrl(img) || img)
+  );
 
   if (allImages.length === 0) return null;
 
