@@ -47,6 +47,12 @@ const Hero = () => {
           src={backgroundImage}
           alt={heroData.title}
           className="w-full h-full object-cover"
+          onError={(e) => {
+            // Fallback to bundled hero image if remote fails
+            if (e.currentTarget.src !== heroImage) {
+              e.currentTarget.src = heroImage;
+            }
+          }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60" />
       </div>
