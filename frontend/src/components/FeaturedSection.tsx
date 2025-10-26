@@ -13,10 +13,8 @@ const FeaturedSection = () => {
 
   const items = data?.data || [];
   
-  // Flatten all images from all featured entries and convert to absolute URLs
-  const allImages = items.flatMap((item) => 
-    (item.images || []).map(img => toImageUrl(img) || img)
-  );
+  // Flatten all images from all featured entries
+  const allImages = items.flatMap((item) => item.images || []);
 
   if (allImages.length === 0) return null;
 
@@ -37,7 +35,7 @@ const FeaturedSection = () => {
               className="group relative overflow-hidden rounded-lg aspect-square bg-background border border-border hover:shadow-xl transition-all duration-300"
             >
               <img
-                src={imageUrl}
+                src={toImageUrl(imageUrl) || imageUrl}
                 alt={`Featured ${idx + 1}`}
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
               />

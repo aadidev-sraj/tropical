@@ -28,8 +28,8 @@ const Hero = () => {
         if (response?.data) {
           setHeroData(response.data);
           if (response.data.backgroundImage) {
-            const absoluteUrl = toImageUrl(response.data.backgroundImage);
-            setBackgroundImage(absoluteUrl || response.data.backgroundImage);
+            const imageUrl = toImageUrl(response.data.backgroundImage);
+            setBackgroundImage(imageUrl || response.data.backgroundImage);
           }
         }
       })

@@ -262,7 +262,11 @@ function Hero() {
                 {uploading && <p>Uploading...</p>}
                 {formData.backgroundImage && (
                   <div className="image-preview">
-                    <img src={toImageUrl(formData.backgroundImage)} alt="Background preview" />
+                    <img 
+                      key={formData.backgroundImage} 
+                      src={toImageUrl(formData.backgroundImage)} 
+                      alt="Background preview" 
+                    />
                   </div>
                 )}
               </div>

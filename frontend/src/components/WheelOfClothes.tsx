@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listFeatured } from "@/lib/featured";
+import { toImageUrl } from "@/lib/api";
 import productDress from "@/assets/product-dress-1.jpg";
 import productBlazer from "@/assets/product-blazer.jpg";
 import productJeans from "@/assets/product-jeans.jpg";
@@ -41,7 +42,7 @@ const WheelOfClothes = () => {
         id: idx + 1,
         name: `Featured ${idx + 1}`,
         price: "",
-        image: img,
+        image: toImageUrl(img) || img,
       }))
     : defaultClothesItems;
 
