@@ -96,9 +96,39 @@ export const heroAPI = {
   delete: (id) => api.delete(`/hero/${id}`),
 };
 
-// Convert relative image URLs from backend (e.g. /uploads/xyz.png) to absolute
+// Convert image URLs from backend to absolute, normalizing localhost or mismatched origins
 export function toImageUrl(u) {
   if (!u) return undefined;
-  if (/^https?:\/\//i.test(u)) return u;
-  return u.startsWith('/') ? API_URL + u : API_URL + '/' + u;
+  
+  try {
+    // Absolute URL provided
+    if (/^https?:\/\//i.test(u)) {
+      const url = new URL(u);
+      const api = new URL(API_URL);
+      const path = url.pathname + (url.search || '');
+      // If the stored absolute URL points to localhost or a different host, and looks like an asset path, rewrite to API origin
+      const isLocalhost = /^(localhost|127\.0\.0\.1)$/i.test(url.hostname);
+      const isForeignHost = url.host !== api.host;
+      const isAssetPath = /^(\/uploads\/|\/assets\/|\/images\/)/i.test(url.pathname);
+      
+      if ((isLocalhost || isForeignHost) && isAssetPath) {
+        return api.origin + path;
+      }
+      return u; // keep as-is
+    }
+
+    // Protocol-relative
+    if (/^\/\//.test(u)) {
+      const api = new URL(API_URL);
+      return `${api.protocol}${u}`;
+    }
+
+    // Relative path
+    const startsWithSlash = u.startsWith('/');
+    return (startsWithSlash ? API_URL + u : API_URL + '/' + u);
+  } catch {
+    // Fallback: best-effort join
+    const startsWithSlash = u.startsWith('/');
+    return (startsWithSlash ? API_URL + u : API_URL + '/' + u);
+  }
 }

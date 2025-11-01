@@ -49,17 +49,19 @@ function Hero() {
     if (!file) return;
 
     setUploading(true);
+    setError('');
     try {
       const response = await uploadAPI.single(file);
       // Store relative path, not absolute URL
-      const imageUrl = response.data.url;
+      const imageUrl = response.data.url || response.url || response.data.data?.url;
+      console.log('Uploaded image URL:', imageUrl);
       setFormData(prev => ({
         ...prev,
         backgroundImage: imageUrl
       }));
     } catch (error) {
       console.error('Error uploading image:', error);
-      alert('Failed to upload image');
+      setError('Failed to upload image: ' + (error.response?.data?.message || error.message));
     } finally {
       setUploading(false);
     }
@@ -163,7 +165,15 @@ function Hero() {
             <div key={hero._id} className="hero-card">
               <div className="hero-preview">
                 {hero.backgroundImage ? (
-                  <img src={toImageUrl(hero.backgroundImage)} alt={hero.title} />
+                  <img 
+                    src={toImageUrl(hero.backgroundImage)} 
+                    alt={hero.title}
+                    onError={(e) => {
+                      console.error('Failed to load hero image:', hero.backgroundImage);
+                      e.target.style.display = 'none';
+                      e.target.parentElement.innerHTML = '<div class="no-image">Image failed to load</div>';
+                    }}
+                  />
                 ) : (
                   <div className="no-image">No Background Image</div>
                 )}
@@ -258,15 +268,22 @@ function Hero() {
                   accept="image/*"
                   onChange={handleImageUpload}
                   disabled={uploading}
+                  className="form-control"
                 />
-                {uploading && <p>Uploading...</p>}
-                {formData.backgroundImage && (
+                {uploading && <p className="upload-status">Uploading image...</p>}
+                {formData.backgroundImage && !uploading && (
                   <div className="image-preview">
                     <img 
-                      key={formData.backgroundImage} 
+                      key={`${formData.backgroundImage}-${Date.now()}`}
                       src={toImageUrl(formData.backgroundImage)} 
-                      alt="Background preview" 
+                      alt="Background preview"
+                      onLoad={() => console.log('Image loaded successfully')}
+                      onError={(e) => {
+                        console.error('Image failed to load:', e.target.src);
+                        setError('Image preview failed to load. The image was uploaded but may not be accessible.');
+                      }}
                     />
+                    <p className="image-path">Path: {formData.backgroundImage}</p>
                   </div>
                 )}
               </div>
