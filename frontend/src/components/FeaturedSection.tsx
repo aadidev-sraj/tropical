@@ -3,7 +3,7 @@ import { listFeatured } from "@/lib/featured";
 import { toImageUrl } from "@/lib/api";
 
 const FeaturedSection = () => {
-  const { data, isLoading, error } = useQuery({
+  const { data } = useQuery({
     queryKey: ["featured"],
     queryFn: () => listFeatured(),
     refetchOnWindowFocus: true,
@@ -13,18 +13,9 @@ const FeaturedSection = () => {
 
   const items = data?.data || [];
   
-  // Process and log image URLs for debugging
-  const allImages = items.flatMap((item) => {
-    const itemImages = item.images?.map(img => {
-      const processedUrl = toImageUrl(img);
-      console.log('Featured image URL:', { original: img, processed: processedUrl });
-      return processedUrl;
-    }) || [];
-    return itemImages;
-  }).filter(Boolean);
+  // Flatten all images from all featured entries
+  const allImages = items.flatMap((item) => item.images || []);
 
-  if (isLoading) return <div className="text-center py-12">Loading featured items...</div>;
-  if (error) return <div className="text-center py-12 text-red-500">Error loading featured items</div>;
   if (allImages.length === 0) return null;
 
   return (
@@ -44,12 +35,7 @@ const FeaturedSection = () => {
               className="group relative overflow-hidden rounded-lg aspect-square bg-background border border-border hover:shadow-xl transition-all duration-300"
             >
               <img
-                src={imageUrl}
-                onError={(e) => {
-                  console.error('Failed to load featured image:', imageUrl);
-                  // You could set a fallback image here if needed
-                  // e.currentTarget.src = '/path/to/fallback-image.jpg';
-                }}
+                src={toImageUrl(imageUrl) || imageUrl}
                 alt={`Featured ${idx + 1}`}
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
               />

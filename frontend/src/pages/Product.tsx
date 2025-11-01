@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getProduct, firstImageUrl, type BackendProduct } from "@/lib/products";
 import { addToCart } from "@/lib/cart";
+import { toImageUrl } from "@/lib/api";
 import Navbar from "@/components/Navbar";
 
 function formatPrice(p: number) {
@@ -44,7 +45,7 @@ export default function Product() {
               {/* Main Image */}
               {(() => {
                 const images = product.images && product.images.length > 0 
-                  ? product.images 
+                  ? product.images.map(img => toImageUrl(img)).filter(Boolean) as string[]
                   : [firstImageUrl(product as any)].filter(Boolean);
                 
                 const currentImage = images[selectedImageIndex] || images[0];

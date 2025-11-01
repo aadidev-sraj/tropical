@@ -5,7 +5,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { ShoppingCart } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import ProductSubNav from "@/components/ProductSubNav";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, toImageUrl } from "@/lib/api";
 
 type BackendProduct = {
   _id: string;
@@ -83,7 +83,7 @@ const CategoryPage = () => {
               >
                 <div className="relative overflow-hidden aspect-[3/4]">
                   <img
-                    src={(product.images && product.images[0]) || "https://via.placeholder.com/600x800?text=Product"}
+                    src={(product.images && product.images[0] && toImageUrl(product.images[0])) || "https://via.placeholder.com/600x800?text=Product"}
                     alt={product.name}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />

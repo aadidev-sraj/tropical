@@ -47,6 +47,7 @@ export function toImageUrl(u?: string) {
       const isLocalhost = /^(localhost|127\.0\.0\.1)$/i.test(url.hostname);
       const isForeignHost = url.host !== api.host;
       const isAssetPath = /^(\/uploads\/|\/assets\/|\/images\/)/i.test(url.pathname);
+      
       if ((isLocalhost || isForeignHost) && isAssetPath) {
         return api.origin + path;
       }
