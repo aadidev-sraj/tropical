@@ -19,6 +19,7 @@ function Hero() {
   });
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
+  const [imageKey, setImageKey] = useState(Date.now());
 
   useEffect(() => {
     fetchHeroes();
@@ -59,6 +60,8 @@ function Hero() {
         ...prev,
         backgroundImage: imageUrl
       }));
+      // Update image key to force re-render only when new image is uploaded
+      setImageKey(Date.now());
     } catch (error) {
       console.error('Error uploading image:', error);
       setError('Failed to upload image: ' + (error.response?.data?.message || error.message));
@@ -95,6 +98,7 @@ function Hero() {
       backgroundImage: hero.backgroundImage || '',
       active: hero.active !== undefined ? hero.active : true
     });
+    setImageKey(Date.now()); // Reset image key when editing
     setShowModal(true);
   };
 
@@ -120,6 +124,7 @@ function Hero() {
       backgroundImage: '',
       active: true 
     });
+    setImageKey(Date.now()); // Reset image key for new hero
     setShowModal(true);
     setError('');
   };
@@ -274,7 +279,7 @@ function Hero() {
                 {formData.backgroundImage && !uploading && (
                   <div className="image-preview">
                     <img 
-                      key={`${formData.backgroundImage}-${Date.now()}`}
+                      key={imageKey}
                       src={toImageUrl(formData.backgroundImage)} 
                       alt="Background preview"
                       onLoad={() => console.log('Image loaded successfully')}
