@@ -170,23 +170,31 @@ function Hero() {
             <div key={hero._id} className="hero-card">
               <div className="hero-preview">
                 {hero.backgroundImage ? (
-                  <img 
-                    src={toImageUrl(hero.backgroundImage)} 
-                    alt={hero.title}
-                    onError={(e) => {
-                      console.error('Failed to load hero image:', hero.backgroundImage);
-                      e.target.style.display = 'none';
-                      e.target.parentElement.innerHTML = '<div class="no-image">Image failed to load</div>';
-                    }}
-                  />
+                  <>
+                    <img 
+                      src={toImageUrl(hero.backgroundImage)} 
+                      alt={hero.title}
+                      onLoad={() => console.log('Hero image loaded:', toImageUrl(hero.backgroundImage))}
+                      onError={(e) => {
+                        console.error('Failed to load hero image:', hero.backgroundImage);
+                        console.error('Attempted URL:', toImageUrl(hero.backgroundImage));
+                        e.target.style.display = 'none';
+                        const parent = e.target.parentElement;
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'no-image';
+                        errorDiv.textContent = 'Image failed to load';
+                        parent.insertBefore(errorDiv, parent.firstChild);
+                      }}
+                    />
+                  </>
                 ) : (
                   <div className="no-image">No Background Image</div>
                 )}
-              </div>
-              <div className="hero-overlay">
-                <h2>{hero.title}</h2>
-                {hero.subtitle && <p>{hero.subtitle}</p>}
-                <button className="preview-btn">{hero.buttonText}</button>
+                <div className="hero-overlay">
+                  <h2>{hero.title}</h2>
+                  {hero.subtitle && <p>{hero.subtitle}</p>}
+                  <button className="preview-btn">{hero.buttonText}</button>
+                </div>
               </div>
               <div className="hero-info">
                 <div className="hero-meta">

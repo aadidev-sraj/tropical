@@ -25,10 +25,13 @@ const Hero = () => {
     // Fetch hero data from API
     apiFetch<{ data: HeroData }>("/hero")
       .then((response) => {
+        console.log("Hero API response:", response);
         if (response?.data) {
           setHeroData(response.data);
           if (response.data.backgroundImage) {
             const imageUrl = toImageUrl(response.data.backgroundImage);
+            console.log("Hero background image - Original:", response.data.backgroundImage);
+            console.log("Hero background image - Converted:", imageUrl);
             setBackgroundImage(imageUrl || response.data.backgroundImage);
           }
         }
@@ -47,7 +50,9 @@ const Hero = () => {
           src={backgroundImage}
           alt={heroData.title}
           className="w-full h-full object-cover"
+          onLoad={() => console.log("Hero image loaded successfully:", backgroundImage)}
           onError={(e) => {
+            console.error("Hero image failed to load:", backgroundImage);
             // Fallback to bundled hero image if remote fails
             if (e.currentTarget.src !== heroImage) {
               e.currentTarget.src = heroImage;
