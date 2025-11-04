@@ -138,11 +138,19 @@ const ContactSection = () => {
               <h3 className="text-2xl font-bold mb-4">Follow Us</h3>
               <div className="flex gap-4">
                 <Button
+                  asChild
                   variant="outline"
                   size="icon"
                   className="hover:bg-accent hover:text-accent-foreground hover:border-accent transition-colors"
                 >
-                  <Instagram className="h-5 w-5" />
+                  <a
+                    href="https://www.instagram.com/fits.on.wheels?igsh=MTFmNWxhYmljbmhlbQ%3D%3D&utm_source=qr"
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Follow Tropical on Instagram"
+                  >
+                    <Instagram className="h-5 w-5" />
+                  </a>
                 </Button>
                 <Button
                   variant="outline"
@@ -150,13 +158,6 @@ const ContactSection = () => {
                   className="hover:bg-accent hover:text-accent-foreground hover:border-accent transition-colors"
                 >
                   <Facebook className="h-5 w-5" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="hover:bg-accent hover:text-accent-foreground hover:border-accent transition-colors"
-                >
-                  <Twitter className="h-5 w-5" />
                 </Button>
               </div>
             </div>
