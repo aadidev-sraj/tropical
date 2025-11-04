@@ -33,6 +33,7 @@ const defaultOrigins = [
   'https://tropical-frontend.onrender.com',
   'https://thetropical.in',
   'https://www.thetropical.in',
+  'https://cms.thetropical.in',
 ];
 
 const envOrigins = [
