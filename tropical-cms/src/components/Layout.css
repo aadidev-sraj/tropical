@@ -56,7 +56,7 @@
 
 .nav-link:hover {
   background-color: hsl(0, 0%, 15%);
-  color: hsl(var(--primary-foreground));
+  color: white;
 }
 
 .nav-link.active {
@@ -78,4 +78,64 @@
   overflow-y: auto;
   background-color: hsl(var(--secondary));
   padding: 2rem;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .layout {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    width: 100%;
+    height: auto;
+    min-height: auto;
+  }
+  
+  .sidebar-header {
+    padding: 1rem;
+  }
+  
+  .sidebar-header h1 {
+    font-size: 1.25rem;
+  }
+  
+  .sidebar-nav {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 0.5rem;
+    overflow-x: auto;
+  }
+  
+  .nav-link {
+    flex: 1 1 auto;
+    min-width: 120px;
+    padding: 0.5rem 1rem;
+    text-align: center;
+    font-size: 0.875rem;
+  }
+  
+  .sidebar-footer {
+    padding: 0.75rem;
+  }
+  
+  .main-content {
+    padding: 1rem;
+    height: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .sidebar-nav {
+    flex-direction: column;
+  }
+  
+  .nav-link {
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .main-content {
+    padding: 0.75rem;
+  }
 }

@@ -4,6 +4,7 @@
   align-items: center;
   min-height: 100vh;
   background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
+  padding: 1rem;
 }
 
 .login-box {
@@ -13,6 +14,22 @@
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
   width: 100%;
   max-width: 400px;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 640px) {
+  .login-box {
+    padding: 1.5rem;
+    border-radius: 6px;
+  }
+  
+  .login-box h1 {
+    font-size: 1.5rem;
+  }
+  
+  .login-box h2 {
+    font-size: 1rem;
+  }
 }
 
 .login-box h1 {
@@ -43,4 +60,15 @@
 .login-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* Add visible borders to input boxes */
+.login-box .form-control {
+  border: 2px solid hsl(var(--border));
+  background-color: hsl(var(--background));
+}
+
+.login-box .form-control:focus {
+  border-color: hsl(var(--accent));
+  box-shadow: 0 0 0 3px hsla(var(--accent) / 0.1);
 }

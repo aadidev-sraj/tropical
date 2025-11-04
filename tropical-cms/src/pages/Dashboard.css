@@ -108,3 +108,49 @@
   background-color: #f8d7da;
   color: #721c24;
 }
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .dashboard h1 {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .stat-card {
+    padding: 1rem;
+  }
+  
+  .stat-number {
+    font-size: 1.5rem;
+  }
+  
+  .recent-orders {
+    padding: 1rem;
+    overflow-x: auto;
+  }
+  
+  .orders-table {
+    min-width: 600px;
+  }
+  
+  .orders-table th,
+  .orders-table td {
+    padding: 0.5rem;
+    font-size: 0.875rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard h1 {
+    font-size: 1.25rem;
+  }
+  
+  .stat-number {
+    font-size: 1.25rem;
+  }
+}
