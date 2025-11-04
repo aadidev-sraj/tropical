@@ -64,7 +64,7 @@
 
 /* Add visible borders to input boxes */
 .login-box .form-control {
-  border: 2px solid hsl(var(--border));
+  border: 2px solid #000;
   background-color: hsl(var(--background));
 }
 
