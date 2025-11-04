@@ -6,7 +6,6 @@ import { apiFetch } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { useRazorpay, RazorpayResponse } from "@/hooks/useRazorpay";
 
 function formatPrice(p: number) {
   return new Intl.NumberFormat('en-IN', { style: "currency", currency: "INR" }).format(p);
@@ -16,7 +15,6 @@ export default function Payment() {
   const navigate = useNavigate();
   const [items, setItems] = useState(() => getCart());
   const [isProcessing, setIsProcessing] = useState(false);
-  const { isLoaded, isLoading, openRazorpay } = useRazorpay();
   const [customerInfo, setCustomerInfo] = useState({
     name: "",
     email: "",
@@ -40,7 +38,7 @@ export default function Payment() {
   const shipping = items.length > 0 ? 1 : 0;
   const total = subtotal + shipping;
 
-  const handlePay = async () => {
+  const handlePlaceOrder = async () => {
     // Validate customer information
     if (!customerInfo.name.trim() || !customerInfo.email.trim() || !customerInfo.phone.trim()) {
       toast.error("Please fill in all required fields (Name, Email, Phone)");
@@ -66,112 +64,49 @@ export default function Payment() {
       return;
     }
 
-    if (!isLoaded) {
-      toast.error("Payment system is loading. Please try again.");
-      return;
-    }
-
     setIsProcessing(true);
 
     try {
-      // Step 1: Create Razorpay order on backend
-      const orderResponse = await apiFetch("/payment/create-order", {
+      const orderPayload = {
+        items: items.map(item => ({
+          productId: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          size: item.size,
+          image: item.image,
+          customization: item.customization
+        })),
+        customerInfo: {
+          name: customerInfo.name,
+          email: customerInfo.email,
+          phone: customerInfo.phone,
+          address: customerInfo.address
+        },
+        pricing: {
+          subtotal,
+          shipping,
+          total
+        }
+      };
+
+      const orderResponse = await apiFetch("/orders", {
         method: "POST",
-        body: JSON.stringify({
-          amount: total,
-          currency: "INR",
-          receipt: `receipt_${Date.now()}`,
-          notes: {
-            customerName: customerInfo.name,
-            customerEmail: customerInfo.email
-          }
-        })
+        body: JSON.stringify(orderPayload)
       });
 
       if (!orderResponse.success) {
-        toast.error(orderResponse.message || "Failed to create payment order");
-        setIsProcessing(false);
+        toast.error(orderResponse.message || "Failed to place order. Please try again.");
         return;
       }
 
-      const { orderId, keyId } = orderResponse.data;
-
-      // Step 2: Open Razorpay checkout
-      openRazorpay({
-        key: keyId,
-        amount: Math.round(total * 100), // Amount in paise
-        currency: "INR",
-        name: "Tropical Store",
-        description: "Order Payment",
-        order_id: orderId,
-        handler: async (response: RazorpayResponse) => {
-          // Step 3: Verify payment on backend and create order
-          try {
-            const orderData = {
-              items: items.map(item => ({
-                productId: item.id,
-                name: item.name,
-                price: item.price,
-                quantity: item.quantity,
-                size: item.size,
-                image: item.image,
-                customization: item.customization
-              })),
-              customerInfo: {
-                name: customerInfo.name,
-                email: customerInfo.email,
-                phone: customerInfo.phone,
-                address: customerInfo.address
-              },
-              pricing: {
-                subtotal,
-                shipping,
-                total
-              }
-            };
-
-            const verifyResponse = await apiFetch("/payment/verify", {
-              method: "POST",
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-                orderData
-              })
-            });
-
-            if (verifyResponse.success) {
-              toast.success("Payment successful! Check your email for confirmation.");
-              clearCart();
-              navigate("/");
-            } else {
-              toast.error(verifyResponse.message || "Payment verification failed");
-            }
-          } catch (error: any) {
-            console.error("Verification error:", error);
-            toast.error("Payment verification failed. Please contact support.");
-          } finally {
-            setIsProcessing(false);
-          }
-        },
-        prefill: {
-          name: customerInfo.name,
-          email: customerInfo.email,
-          contact: customerInfo.phone
-        },
-        theme: {
-          color: "#667eea"
-        },
-        modal: {
-          ondismiss: () => {
-            setIsProcessing(false);
-            toast.info("Payment cancelled");
-          }
-        }
-      });
+      toast.success("Order placed! You'll receive a confirmation email soon.");
+      clearCart();
+      navigate("/");
     } catch (error: any) {
-      console.error("Payment error:", error);
-      toast.error(error.message || "Failed to initiate payment. Please try again.");
+      console.error("Order placement error:", error);
+      toast.error(error.message || "Failed to place order. Please try again later.");
+    } finally {
       setIsProcessing(false);
     }
   };
@@ -338,17 +273,14 @@ export default function Payment() {
               <div className="flex justify-between font-semibold border-t pt-2"><span>Total</span><span>{formatPrice(total)}</span></div>
             </div>
             <button
-              disabled={items.length === 0 || isProcessing || isLoading}
-              onClick={handlePay}
+              disabled={items.length === 0 || isProcessing}
+              onClick={handlePlaceOrder}
               className="mt-4 w-full inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-primary-foreground hover:opacity-90 disabled:opacity-50"
             >
-              {isLoading ? "Loading..." : isProcessing ? "Processing..." : "Pay with Razorpay"}
+              {isProcessing ? "Placing order..." : "Place Order"}
             </button>
             <p className="text-xs text-muted-foreground text-center mt-2">
-              💳 Secure payment via Razorpay
-            </p>
-            <p className="text-xs text-muted-foreground text-center mt-1">
-              📧 Email confirmation after payment
+              🧾 You'll receive an email confirmation with your order details
             </p>
           </div>
         </div>
