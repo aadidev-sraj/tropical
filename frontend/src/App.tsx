@@ -13,7 +13,7 @@ import Product from "./pages/Product";
 import Payment from "./pages/Payment";
 import CategoryPage from "./pages/CategoryPage";
 import CustomizableProducts from "./pages/CustomizableProducts";
-import CustomizeProductV2 from "./pages/CustomizeProduct_new";
+import CustomizeProduct from "./pages/CustomizeProduct";
 
 const queryClient = new QueryClient();
 
@@ -37,7 +37,7 @@ const App = () => (
           <Route path="/products/hoodies" element={<CategoryPage />} />
           <Route path="/products/pants" element={<CategoryPage />} />
           <Route path="/customize" element={<CustomizableProducts />} />
-          <Route path="/customize-product/:slug" element={<CustomizeProductV2 />} />
+          <Route path="/customize-product/:slug" element={<CustomizeProduct />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
