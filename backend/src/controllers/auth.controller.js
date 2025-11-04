@@ -1,6 +1,7 @@
 const User = require('../models/user.model');
 const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
+const emailService = require('../services/email.service');
 
 // Generate JWT Token
 const generateToken = (id) => {
@@ -39,6 +40,16 @@ exports.register = async (req, res, next) => {
 
     // Generate token
     const token = generateToken(user._id);
+
+    // Send welcome email (non-blocking)
+    emailService.sendWelcomeEmail({
+      name: user.name,
+      email: user.email
+    }).then(result => {
+      console.log('Welcome email:', result.success ? '✓ Sent' : '✗ Failed');
+    }).catch(err => {
+      console.error('Welcome email error:', err);
+    });
 
     // Remove password from output
     user.password = undefined;

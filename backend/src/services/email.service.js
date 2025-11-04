@@ -28,6 +28,89 @@ class EmailService {
     }
   }
 
+  async sendWelcomeEmail(userData) {
+    if (!this.transporter) {
+      console.log('Email service not configured. Skipping welcome email.');
+      return { success: false, message: 'Email service not configured' };
+    }
+
+    try {
+      const { name, email } = userData;
+
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Welcome to The Tropical</title>
+        </head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif; line-height: 1.6; color: #1a1a1a; max-width: 600px; margin: 0 auto; padding: 0; background-color: #f5f5f5;">
+          <!-- Header -->
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -0.5px;">Welcome to The Tropical! 🌴</h1>
+          </div>
+          
+          <!-- Body -->
+          <div style="background: #ffffff; padding: 40px 30px;">
+            <p style="font-size: 18px; margin: 0 0 10px 0;">Hello <strong>${name}</strong>,</p>
+            <p style="color: #666; margin: 0 0 20px 0;">Thank you for joining The Tropical! We're excited to have you as part of our community.</p>
+            
+            <div style="background: #f9f9f9; padding: 25px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #667eea;">
+              <h2 style="color: #1a1a1a; margin: 0 0 15px 0; font-size: 20px; font-weight: 700;">What's Next?</h2>
+              <ul style="margin: 0; padding-left: 20px; color: #666;">
+                <li style="margin-bottom: 10px;">Browse our latest collection of premium apparel</li>
+                <li style="margin-bottom: 10px;">Customize products with your own designs</li>
+                <li style="margin-bottom: 10px;">Enjoy exclusive member benefits and updates</li>
+              </ul>
+            </div>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="https://thetropical.in" style="display: inline-block; background: #667eea; color: #ffffff; padding: 14px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">Start Shopping</a>
+            </div>
+
+            <p style="color: #999; font-size: 14px; margin: 30px 0 0 0; padding-top: 20px; border-top: 1px solid #eee;">
+              If you have any questions, feel free to reach out to us anytime.
+            </p>
+          </div>
+          
+          <!-- Footer -->
+          <div style="background: #1a1a1a; padding: 25px 30px; text-align: center;">
+            <p style="color: #999; margin: 0; font-size: 13px;">
+              © ${new Date().getFullYear()} The Tropical. All rights reserved.
+            </p>
+            <p style="color: #666; margin: 10px 0 0 0; font-size: 12px;">
+              You're receiving this because you signed up at thetropical.in
+            </p>
+          </div>
+        </body>
+        </html>
+      `;
+
+      const mailOptions = {
+        from: `"The Tropical" <${process.env.SMTP_EMAIL}>`,
+        to: email,
+        subject: '🌴 Welcome to The Tropical!',
+        html: htmlContent
+      };
+
+      const info = await this.transporter.sendMail(mailOptions);
+      console.log(`Welcome email sent to ${email}. Message ID: ${info.messageId}`);
+
+      return {
+        success: true,
+        messageId: info.messageId,
+        message: 'Welcome email sent successfully'
+      };
+    } catch (error) {
+      console.error('Error sending welcome email:', error);
+      return {
+        success: false,
+        error: error.message,
+        message: 'Failed to send welcome email'
+      };
+    }
+  }
+
   async sendOrderConfirmationEmail(orderData) {
     if (!this.transporter) {
       console.log('Email service not configured. Skipping notification.');
@@ -520,17 +603,46 @@ class EmailService {
 
     try {
       const htmlContent = `
-        <div style="font-family: Arial, sans-serif; line-height:1.6;">
-          <h2>New Contact Message</h2>
-          <p><strong>Name:</strong> ${name}</p>
-          <p><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p>
-          <p><strong>Message:</strong></p>
-          <div style="white-space: pre-wrap; background:#f7f7f7; padding:12px; border-radius:6px;">${message}</div>
-        </div>
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>New Contact Message</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 700px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+            <h1 style="color: white; margin: 0;">📩 NEW CONTACT MESSAGE</h1>
+          </div>
+          
+          <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
+            <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin-bottom: 20px; border-radius: 5px;">
+              <p style="margin: 0; font-weight: bold;">⚡ Someone is trying to reach you!</p>
+            </div>
+            
+            <div style="background: white; padding: 20px; border-radius: 5px; margin: 20px 0;">
+              <h2 style="color: #667eea; margin-top: 0;">Contact Information</h2>
+              <p><strong>Name:</strong> ${name}</p>
+              <p><strong>Email:</strong> <a href="mailto:${email}" style="color: #667eea;">${email}</a></p>
+              <p><strong>Date:</strong> ${new Date().toLocaleString()}</p>
+            </div>
+            
+            <div style="background: white; padding: 20px; border-radius: 5px; margin: 20px 0;">
+              <h2 style="color: #667eea; margin-top: 0;">Message</h2>
+              <div style="white-space: pre-wrap; background: #f7f7f7; padding: 15px; border-radius: 6px; border-left: 3px solid #667eea;">
+                ${message}
+              </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 25px; padding-top: 20px; border-top: 1px solid #ddd;">
+              <a href="mailto:${email}" style="display: inline-block; background: #667eea; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: 600;">Reply to ${name}</a>
+            </div>
+          </div>
+        </body>
+        </html>
       `;
 
       const mailOptions = {
-        from: `"${process.env.FROM_NAME || 'Tropical Store'}" <${process.env.SMTP_EMAIL}>`,
+        from: `"The Tropical" <${process.env.SMTP_EMAIL}>`,
         to: adminEmail,
         subject: `📩 New Contact Message from ${name}`,
         replyTo: email,
