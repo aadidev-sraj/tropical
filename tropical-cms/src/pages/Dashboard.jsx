@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { productsAPI, ordersAPI } from '../utils/api';
+import { productsAPI, ordersAPI, contactsAPI } from '../utils/api';
 import './Dashboard.css';
 
 function Dashboard() {
@@ -7,6 +7,7 @@ function Dashboard() {
     totalProducts: 0,
     totalOrders: 0,
     pendingOrders: 0,
+    newContacts: 0,
     recentOrders: []
   });
   const [loading, setLoading] = useState(true);
@@ -17,13 +18,15 @@ function Dashboard() {
 
   const fetchStats = async () => {
     try {
-      const [productsRes, ordersRes] = await Promise.all([
+      const [productsRes, ordersRes, contactsRes] = await Promise.all([
         productsAPI.getAll(),
-        ordersAPI.getAll()
+        ordersAPI.getAll(),
+        contactsAPI.getAll({ status: 'new' })
       ]);
 
       const products = productsRes.data.data || [];
       const orders = ordersRes.data.data || [];
+      const contacts = contactsRes.data.data || [];
       const pending = orders.filter(o => o.status === 'pending').length;
       const recent = orders.slice(0, 5);
 
@@ -31,6 +34,7 @@ function Dashboard() {
         totalProducts: products.length,
         totalOrders: orders.length,
         pendingOrders: pending,
+        newContacts: contacts.length,
         recentOrders: recent
       });
     } catch (error) {
@@ -67,6 +71,13 @@ function Dashboard() {
           <div className="stat-content">
             <h3>Pending Orders</h3>
             <p className="stat-number">{stats.pendingOrders}</p>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-content">
+            <h3>New Messages</h3>
+            <p className="stat-number">{stats.newContacts}</p>
           </div>
         </div>
       </div>

@@ -28,6 +28,9 @@ function Layout({ onLogout }) {
           <Link to="/orders" className={`nav-link ${isActive('/orders')}`}>
             Orders
           </Link>
+          <Link to="/contacts" className={`nav-link ${isActive('/contacts')}`}>
+            Contact Messages
+          </Link>
           <Link to="/featured" className={`nav-link ${isActive('/featured')}`}>
             Wheel Items
           </Link>

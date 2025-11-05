@@ -5,6 +5,7 @@ import { getProduct, firstImageUrl, type BackendProduct } from "@/lib/products";
 import { addToCart } from "@/lib/cart";
 import { toImageUrl } from "@/lib/api";
 import Navbar from "@/components/Navbar";
+import { toast } from "sonner";
 
 function formatPrice(p: number) {
   return new Intl.NumberFormat('en-IN', { style: "currency", currency: "INR" }).format(p);
@@ -143,7 +144,7 @@ export default function Product() {
                     disabled={product.sizes && product.sizes.length > 0 && !selectedSize}
                     onClick={() => {
                       if (product.sizes && product.sizes.length > 0 && !selectedSize) {
-                        alert('Please select a size');
+                        toast.error('Please select a size');
                         return;
                       }
                       addToCart({
@@ -154,9 +155,16 @@ export default function Product() {
                         quantity: 1,
                         size: selectedSize || undefined,
                       });
+                      toast.success(`${product.name} added to cart!`, {
+                        description: selectedSize ? `Size: ${selectedSize}` : undefined,
+                        action: {
+                          label: 'View Cart',
+                          onClick: () => window.location.href = '/cart'
+                        }
+                      });
                     }}
                   >
-                    Add to Cart
+                    🛒 Add to Cart
                   </button>
                 )}
                 <Link

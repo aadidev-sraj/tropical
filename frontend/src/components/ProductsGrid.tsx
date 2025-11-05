@@ -1,11 +1,10 @@
-import { useState } from "react";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { getToken } from "@/lib/api";
 import { addToCart } from "@/lib/cart";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
 import { ShoppingCart } from "lucide-react";
+import { toast } from "sonner";
 import productDress from "@/assets/product-dress-1.jpg";
 import productBlazer from "@/assets/product-blazer.jpg";
 import productJeans from "@/assets/product-jeans.jpg";
@@ -75,7 +74,6 @@ const products = [
 const ProductsGrid = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [modalOpen, setModalOpen] = useState(false);
   const { data } = useQuery({
     queryKey: ["products"],
     queryFn: () => listProducts(),
@@ -115,7 +113,13 @@ const ProductsGrid = () => {
     // Parse price like "$89" => 89
     const priceNum = typeof product.price === "number" ? product.price : Number(String(product.price).replace(/[^0-9.]/g, ""));
     addToCart({ id: product.id, name: product.name, price: priceNum, image: product.image, quantity: 1 });
-    setModalOpen(true);
+    toast.success(`${product.name} added to cart!`, {
+      description: `Price: ₹${priceNum}`,
+      action: {
+        label: 'View Cart',
+        onClick: () => navigate('/cart')
+      }
+    });
   };
 
   return (
@@ -171,20 +175,6 @@ const ProductsGrid = () => {
             </Card>
           ))}
         </div>
-        <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Item added successfully</DialogTitle>
-              <DialogDescription>
-                Your item has been added to the cart.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter className="flex gap-2 sm:justify-end">
-              <Button variant="outline" onClick={() => setModalOpen(false)}>Continue shopping</Button>
-              <Button onClick={() => navigate('/cart')}>Go to cart</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </div>
     </section>
   );

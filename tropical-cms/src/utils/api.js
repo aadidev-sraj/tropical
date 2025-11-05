@@ -96,6 +96,13 @@ export const heroAPI = {
   delete: (id) => api.delete(`/hero/${id}`),
 };
 
+// Contacts API
+export const contactsAPI = {
+  getAll: (params) => api.get('/admin/contacts', { params }),
+  updateStatus: (id, status) => api.patch(`/admin/contacts/${id}/status`, { status }),
+  delete: (id) => api.delete(`/admin/contacts/${id}`),
+};
+
 // Convert image URLs from backend to absolute, normalizing localhost or mismatched origins
 export function toImageUrl(u) {
   if (!u) return undefined;

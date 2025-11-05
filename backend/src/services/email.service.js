@@ -18,11 +18,20 @@ class EmailService {
             pass: process.env.SMTP_PASSWORD
           },
           // Add timeout and debug options
-          connectionTimeout: 10000, // 10 seconds
-          greetingTimeout: 10000,
-          socketTimeout: 10000,
+          connectionTimeout: 30000, // 30 seconds (increased from 10)
+          greetingTimeout: 30000,
+          socketTimeout: 30000,
           debug: process.env.NODE_ENV !== 'production', // Enable debug in development
-          logger: process.env.NODE_ENV !== 'production' // Enable logger in development
+          logger: process.env.NODE_ENV !== 'production', // Enable logger in development
+          // TLS options for better compatibility
+          tls: {
+            rejectUnauthorized: true,
+            minVersion: 'TLSv1.2'
+          },
+          // Pool settings for better connection management
+          pool: true,
+          maxConnections: 5,
+          maxMessages: 10
         });
         
         console.log('📧 Email service transporter created');
@@ -31,8 +40,10 @@ class EmailService {
         console.log('   SMTP Email:', process.env.SMTP_EMAIL);
         console.log('   Admin Email:', process.env.ADMIN_EMAIL || process.env.SMTP_EMAIL);
         
-        // Verify connection
-        this.verifyConnection();
+        // Verify connection (non-blocking - don't wait for it)
+        this.verifyConnection().catch(err => {
+          console.warn('⚠ Email verification failed, but service will continue');
+        });
       } catch (error) {
         console.error('❌ Failed to initialize email service:', error.message);
         console.error('   Full error:', error);

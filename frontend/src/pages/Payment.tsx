@@ -6,6 +6,7 @@ import { apiFetch } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { useRazorpay, type RazorpayResponse } from "@/hooks/useRazorpay";
 
 function formatPrice(p: number) {
   return new Intl.NumberFormat('en-IN', { style: "currency", currency: "INR" }).format(p);
@@ -13,6 +14,7 @@ function formatPrice(p: number) {
 
 export default function Payment() {
   const navigate = useNavigate();
+  const { isLoaded: isRazorpayLoaded, openRazorpay } = useRazorpay();
   const [items, setItems] = useState(() => getCart());
   const [isProcessing, setIsProcessing] = useState(false);
   const [customerInfo, setCustomerInfo] = useState({
@@ -64,49 +66,114 @@ export default function Payment() {
       return;
     }
 
+    if (!isRazorpayLoaded) {
+      toast.error("Payment gateway is loading. Please wait...");
+      return;
+    }
+
     setIsProcessing(true);
 
     try {
+      // Step 1: Create Razorpay order
       const orderPayload = {
-        items: items.map(item => ({
-          productId: item.id,
-          name: item.name,
-          price: item.price,
-          quantity: item.quantity,
-          size: item.size,
-          image: item.image,
-          customization: item.customization
-        })),
-        customerInfo: {
-          name: customerInfo.name,
-          email: customerInfo.email,
-          phone: customerInfo.phone,
-          address: customerInfo.address
-        },
-        pricing: {
-          subtotal,
-          shipping,
-          total
+        amount: total,
+        currency: "INR",
+        receipt: `order_${Date.now()}`,
+        notes: {
+          customerName: customerInfo.name,
+          customerEmail: customerInfo.email
         }
       };
 
-      const orderResponse = await apiFetch("/orders", {
+      const razorpayOrderResponse = await apiFetch("/payment/create-order", {
         method: "POST",
         body: JSON.stringify(orderPayload)
       });
 
-      if (!orderResponse.success) {
-        toast.error(orderResponse.message || "Failed to place order. Please try again.");
+      if (!razorpayOrderResponse.success) {
+        toast.error(razorpayOrderResponse.message || "Failed to create payment order");
+        setIsProcessing(false);
         return;
       }
 
-      toast.success("Order placed! You'll receive a confirmation email soon.");
-      clearCart();
-      navigate("/");
+      const { orderId, amount, currency, keyId } = razorpayOrderResponse.data;
+
+      // Step 2: Open Razorpay payment modal
+      openRazorpay({
+        key: keyId,
+        amount: amount,
+        currency: currency,
+        name: "The Tropical",
+        description: "Order Payment",
+        order_id: orderId,
+        handler: async (response: RazorpayResponse) => {
+          // Step 3: Verify payment and create order
+          try {
+            const verifyPayload = {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              orderData: {
+                items: items.map(item => ({
+                  productId: item.id,
+                  name: item.name,
+                  price: item.price,
+                  quantity: item.quantity,
+                  size: item.size,
+                  image: item.image,
+                  customization: item.customization
+                })),
+                customerInfo: {
+                  name: customerInfo.name,
+                  email: customerInfo.email,
+                  phone: customerInfo.phone,
+                  address: customerInfo.address
+                },
+                pricing: {
+                  subtotal,
+                  shipping,
+                  total
+                }
+              }
+            };
+
+            const verifyResponse = await apiFetch("/payment/verify", {
+              method: "POST",
+              body: JSON.stringify(verifyPayload)
+            });
+
+            if (verifyResponse.success) {
+              toast.success("Payment successful! Order placed. You'll receive a confirmation email soon.");
+              clearCart();
+              navigate("/");
+            } else {
+              toast.error(verifyResponse.message || "Payment verification failed");
+            }
+          } catch (error: any) {
+            console.error("Payment verification error:", error);
+            toast.error("Payment verification failed. Please contact support.");
+          } finally {
+            setIsProcessing(false);
+          }
+        },
+        prefill: {
+          name: customerInfo.name,
+          email: customerInfo.email,
+          contact: customerInfo.phone
+        },
+        theme: {
+          color: "#667eea"
+        },
+        modal: {
+          ondismiss: () => {
+            setIsProcessing(false);
+            toast.info("Payment cancelled");
+          }
+        }
+      });
     } catch (error: any) {
       console.error("Order placement error:", error);
-      toast.error(error.message || "Failed to place order. Please try again later.");
-    } finally {
+      toast.error(error.message || "Failed to initiate payment. Please try again later.");
       setIsProcessing(false);
     }
   };
@@ -273,13 +340,16 @@ export default function Payment() {
               <div className="flex justify-between font-semibold border-t pt-2"><span>Total</span><span>{formatPrice(total)}</span></div>
             </div>
             <button
-              disabled={items.length === 0 || isProcessing}
+              disabled={items.length === 0 || isProcessing || !isRazorpayLoaded}
               onClick={handlePlaceOrder}
               className="mt-4 w-full inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-primary-foreground hover:opacity-90 disabled:opacity-50"
             >
-              {isProcessing ? "Placing order..." : "Place Order"}
+              {isProcessing ? "Processing..." : !isRazorpayLoaded ? "Loading..." : "Pay with Razorpay"}
             </button>
             <p className="text-xs text-muted-foreground text-center mt-2">
+              💳 Secure payment via Razorpay
+            </p>
+            <p className="text-xs text-muted-foreground text-center mt-1">
               🧾 You'll receive an email confirmation with your order details
             </p>
           </div>

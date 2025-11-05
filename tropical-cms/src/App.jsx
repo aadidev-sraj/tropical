@@ -7,6 +7,7 @@ import Orders from './pages/Orders';
 import Featured from './pages/Featured';
 import Hero from './pages/Hero';
 import Designs from './pages/Designs';
+import Contacts from './pages/Contacts';
 import Layout from './components/Layout';
 import './App.css';
 
@@ -60,6 +61,7 @@ function App() {
           <Route index element={<Dashboard />} />
           <Route path="products" element={<Products />} />
           <Route path="orders" element={<Orders />} />
+          <Route path="contacts" element={<Contacts />} />
           <Route path="featured" element={<Featured />} />
           <Route path="hero" element={<Hero />} />
           <Route path="designs" element={<Designs />} />
