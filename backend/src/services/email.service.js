@@ -3,6 +3,7 @@ const nodemailer = require('nodemailer');
 class EmailService {
   constructor() {
     this.transporter = null;
+    this.isVerified = false;
     
     // Initialize nodemailer transporter
     if (process.env.SMTP_HOST && process.env.SMTP_PORT && 
@@ -15,23 +16,78 @@ class EmailService {
           auth: {
             user: process.env.SMTP_EMAIL,
             pass: process.env.SMTP_PASSWORD
-          }
+          },
+          // Add timeout and debug options
+          connectionTimeout: 10000, // 10 seconds
+          greetingTimeout: 10000,
+          socketTimeout: 10000,
+          debug: process.env.NODE_ENV !== 'production', // Enable debug in development
+          logger: process.env.NODE_ENV !== 'production' // Enable logger in development
         });
-        console.log('✓ Email service initialized successfully');
+        
+        console.log('📧 Email service transporter created');
+        console.log('   SMTP Host:', process.env.SMTP_HOST);
+        console.log('   SMTP Port:', process.env.SMTP_PORT);
+        console.log('   SMTP Email:', process.env.SMTP_EMAIL);
+        console.log('   Admin Email:', process.env.ADMIN_EMAIL || process.env.SMTP_EMAIL);
+        
+        // Verify connection
+        this.verifyConnection();
       } catch (error) {
-        console.warn('Failed to initialize email service:', error.message);
+        console.error('❌ Failed to initialize email service:', error.message);
+        console.error('   Full error:', error);
         this.transporter = null;
       }
     } else {
       console.warn('⚠ Email credentials not properly configured. Email notifications will be disabled.');
       console.warn('  Please check SMTP_* variables in .env file');
+      console.warn('  Missing variables:');
+      if (!process.env.SMTP_HOST) console.warn('    - SMTP_HOST');
+      if (!process.env.SMTP_PORT) console.warn('    - SMTP_PORT');
+      if (!process.env.SMTP_EMAIL) console.warn('    - SMTP_EMAIL');
+      if (!process.env.SMTP_PASSWORD) console.warn('    - SMTP_PASSWORD');
+    }
+  }
+
+  async verifyConnection() {
+    if (!this.transporter) {
+      console.warn('⚠ Cannot verify email connection - transporter not initialized');
+      return false;
+    }
+
+    try {
+      console.log('🔍 Verifying SMTP connection...');
+      await this.transporter.verify();
+      this.isVerified = true;
+      console.log('✅ Email service verified and ready to send emails!');
+      return true;
+    } catch (error) {
+      this.isVerified = false;
+      console.error('❌ Email service verification FAILED!');
+      console.error('   Error:', error.message);
+      console.error('   Code:', error.code);
+      console.error('   ');
+      console.error('   Common solutions:');
+      console.error('   1. For Gmail: Use App Password (not regular password)');
+      console.error('      - Go to: https://myaccount.google.com/apppasswords');
+      console.error('      - Enable 2-Step Verification first');
+      console.error('      - Generate App Password and use it in SMTP_PASSWORD');
+      console.error('   2. Check SMTP credentials are correct');
+      console.error('   3. Check firewall/network allows SMTP connections');
+      console.error('   4. For other providers, ensure "Less secure apps" is enabled');
+      console.error('   ');
+      return false;
     }
   }
 
   async sendWelcomeEmail(userData) {
     if (!this.transporter) {
-      console.log('Email service not configured. Skipping welcome email.');
+      console.log('❌ Email service not configured. Skipping welcome email.');
       return { success: false, message: 'Email service not configured' };
+    }
+
+    if (!this.isVerified) {
+      console.warn('⚠ Email service not verified. Attempting to send anyway...');
     }
 
     try {
@@ -93,8 +149,12 @@ class EmailService {
         html: htmlContent
       };
 
+      console.log(`📤 Sending welcome email to ${email}...`);
       const info = await this.transporter.sendMail(mailOptions);
-      console.log(`Welcome email sent to ${email}. Message ID: ${info.messageId}`);
+      console.log(`✅ Welcome email sent successfully!`);
+      console.log(`   To: ${email}`);
+      console.log(`   Message ID: ${info.messageId}`);
+      console.log(`   Response: ${info.response}`);
 
       return {
         success: true,
@@ -102,7 +162,12 @@ class EmailService {
         message: 'Welcome email sent successfully'
       };
     } catch (error) {
-      console.error('Error sending welcome email:', error);
+      console.error('❌ Error sending welcome email:');
+      console.error('   To:', email);
+      console.error('   Error:', error.message);
+      console.error('   Code:', error.code);
+      console.error('   Command:', error.command);
+      if (error.response) console.error('   Response:', error.response);
       return {
         success: false,
         error: error.message,
@@ -591,8 +656,12 @@ class EmailService {
 
   async sendContactMessage({ name, email, message }) {
     if (!this.transporter) {
-      console.log('Email service not configured. Skipping contact email.');
+      console.log('❌ Email service not configured. Skipping contact email.');
       return { success: false, message: 'Email service not configured' };
+    }
+
+    if (!this.isVerified) {
+      console.warn('⚠ Email service not verified. Attempting to send anyway...');
     }
 
     const adminEmail = process.env.ADMIN_EMAIL || process.env.SMTP_EMAIL;
@@ -649,11 +718,22 @@ class EmailService {
         html: htmlContent
       };
 
+      console.log(`📤 Sending contact email from ${name} (${email}) to admin...`);
       const info = await this.transporter.sendMail(mailOptions);
-      console.log(`Contact email sent successfully. Message ID: ${info.messageId}`);
+      console.log(`✅ Contact email sent successfully!`);
+      console.log(`   From: ${name} (${email})`);
+      console.log(`   To: ${adminEmail}`);
+      console.log(`   Message ID: ${info.messageId}`);
+      console.log(`   Response: ${info.response}`);
       return { success: true, messageId: info.messageId };
     } catch (error) {
-      console.error('Error sending contact email:', error);
+      console.error('❌ Error sending contact email:');
+      console.error('   From:', name, '(' + email + ')');
+      console.error('   To:', adminEmail);
+      console.error('   Error:', error.message);
+      console.error('   Code:', error.code);
+      console.error('   Command:', error.command);
+      if (error.response) console.error('   Response:', error.response);
       return { success: false, error: error.message };
     }
   }
