@@ -1,12 +1,32 @@
 const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
 class EmailService {
   constructor() {
     this.transporter = null;
+    this.resend = null;
     this.isVerified = false;
+    this.useResend = false;
     
-    // Initialize nodemailer transporter
-    if (process.env.SMTP_HOST && process.env.SMTP_PORT && 
+    // Priority 1: Try Resend (HTTP API - works everywhere)
+    if (process.env.RESEND_API_KEY) {
+      try {
+        this.resend = new Resend(process.env.RESEND_API_KEY);
+        this.useResend = true;
+        this.isVerified = true; // Resend doesn't need verification
+        console.log('📧 Email service initialized with Resend (HTTP API)');
+        console.log('   From Email:', process.env.RESEND_FROM_EMAIL || process.env.SMTP_EMAIL || 'onboarding@resend.dev');
+        console.log('   Admin Email:', process.env.ADMIN_EMAIL || process.env.SMTP_EMAIL);
+        console.log('   ✅ Resend is ready to send emails!');
+      } catch (error) {
+        console.error('❌ Failed to initialize Resend:', error.message);
+        this.resend = null;
+        this.useResend = false;
+      }
+    }
+    
+    // Priority 2: Fallback to SMTP (Nodemailer)
+    if (!this.useResend && process.env.SMTP_HOST && process.env.SMTP_PORT && 
         process.env.SMTP_EMAIL && process.env.SMTP_PASSWORD) {
       try {
         // Detect if using Brevo (formerly Sendinblue)
@@ -112,12 +132,12 @@ class EmailService {
   }
 
   async sendWelcomeEmail(userData) {
-    if (!this.transporter) {
+    if (!this.transporter && !this.resend) {
       console.log('❌ Email service not configured. Skipping welcome email.');
       return { success: false, message: 'Email service not configured' };
     }
 
-    if (!this.isVerified) {
+    if (!this.isVerified && !this.useResend) {
       console.warn('⚠ Email service not verified. Attempting to send anyway...');
     }
 
@@ -173,6 +193,30 @@ class EmailService {
         </html>
       `;
 
+      console.log(`📤 Sending welcome email to ${email}...`);
+      
+      // Use Resend if available (HTTP API - more reliable)
+      if (this.useResend && this.resend) {
+        const fromEmail = process.env.RESEND_FROM_EMAIL || process.env.SMTP_EMAIL || 'onboarding@resend.dev';
+        const data = await this.resend.emails.send({
+          from: `The Tropical <${fromEmail}>`,
+          to: [email],
+          subject: '🌴 Welcome to The Tropical!',
+          html: htmlContent
+        });
+
+        console.log(`✅ Welcome email sent successfully via Resend!`);
+        console.log(`   To: ${email}`);
+        console.log(`   Message ID: ${data.id}`);
+
+        return {
+          success: true,
+          messageId: data.id,
+          message: 'Welcome email sent successfully via Resend'
+        };
+      }
+      
+      // Fallback to SMTP
       const mailOptions = {
         from: `"The Tropical" <${process.env.SMTP_EMAIL}>`,
         to: email,
@@ -180,9 +224,8 @@ class EmailService {
         html: htmlContent
       };
 
-      console.log(`📤 Sending welcome email to ${email}...`);
       const info = await this.transporter.sendMail(mailOptions);
-      console.log(`✅ Welcome email sent successfully!`);
+      console.log(`✅ Welcome email sent successfully via SMTP!`);
       console.log(`   To: ${email}`);
       console.log(`   Message ID: ${info.messageId}`);
       console.log(`   Response: ${info.response}`);
@@ -190,7 +233,7 @@ class EmailService {
       return {
         success: true,
         messageId: info.messageId,
-        message: 'Welcome email sent successfully'
+        message: 'Welcome email sent successfully via SMTP'
       };
     } catch (error) {
       console.error('❌ Error sending welcome email:');
@@ -208,7 +251,7 @@ class EmailService {
   }
 
   async sendOrderConfirmationEmail(orderData) {
-    if (!this.transporter) {
+    if (!this.transporter && !this.resend) {
       console.log('Email service not configured. Skipping notification.');
       return { success: false, message: 'Email service not configured' };
     }
@@ -437,7 +480,7 @@ class EmailService {
   }
 
   async sendAdminOrderNotification(orderData) {
-    if (!this.transporter) {
+    if (!this.transporter && !this.resend) {
       console.log('Email service not configured. Skipping admin notification.');
       return { success: false, message: 'Email service not configured' };
     }
@@ -686,12 +729,12 @@ class EmailService {
   }
 
   async sendContactMessage({ name, email, message }) {
-    if (!this.transporter) {
+    if (!this.transporter && !this.resend) {
       console.log('❌ Email service not configured. Skipping contact email.');
       return { success: false, message: 'Email service not configured' };
     }
 
-    if (!this.isVerified) {
+    if (!this.isVerified && !this.useResend) {
       console.warn('⚠ Email service not verified. Attempting to send anyway...');
     }
 
@@ -741,6 +784,27 @@ class EmailService {
         </html>
       `;
 
+      console.log(`📤 Sending contact email from ${name} (${email}) to admin...`);
+      
+      // Use Resend if available (HTTP API - more reliable)
+      if (this.useResend && this.resend) {
+        const fromEmail = process.env.RESEND_FROM_EMAIL || process.env.SMTP_EMAIL || 'onboarding@resend.dev';
+        const data = await this.resend.emails.send({
+          from: `The Tropical <${fromEmail}>`,
+          to: [adminEmail],
+          subject: `📩 New Contact Message from ${name}`,
+          replyTo: email,
+          html: htmlContent
+        });
+
+        console.log(`✅ Contact email sent successfully via Resend!`);
+        console.log(`   From: ${name} (${email})`);
+        console.log(`   To: ${adminEmail}`);
+        console.log(`   Message ID: ${data.id}`);
+        return { success: true, messageId: data.id };
+      }
+      
+      // Fallback to SMTP
       const mailOptions = {
         from: `"The Tropical" <${process.env.SMTP_EMAIL}>`,
         to: adminEmail,
@@ -749,9 +813,8 @@ class EmailService {
         html: htmlContent
       };
 
-      console.log(`📤 Sending contact email from ${name} (${email}) to admin...`);
       const info = await this.transporter.sendMail(mailOptions);
-      console.log(`✅ Contact email sent successfully!`);
+      console.log(`✅ Contact email sent successfully via SMTP!`);
       console.log(`   From: ${name} (${email})`);
       console.log(`   To: ${adminEmail}`);
       console.log(`   Message ID: ${info.messageId}`);
