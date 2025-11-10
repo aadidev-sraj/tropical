@@ -198,20 +198,25 @@ class EmailService {
       // Use Resend if available (HTTP API - more reliable)
       if (this.useResend && this.resend) {
         const fromEmail = process.env.RESEND_FROM_EMAIL || process.env.SMTP_EMAIL || 'onboarding@resend.dev';
-        const data = await this.resend.emails.send({
+        const { data, error } = await this.resend.emails.send({
           from: `The Tropical <${fromEmail}>`,
           to: [email],
           subject: '🌴 Welcome to The Tropical!',
           html: htmlContent
         });
 
+        if (error) {
+          console.error('❌ Resend failed to send welcome email:', error.message || error);
+          throw new Error(error.message || 'Resend welcome email failed');
+        }
+
         console.log(`✅ Welcome email sent successfully via Resend!`);
         console.log(`   To: ${email}`);
-        console.log(`   Message ID: ${data.id}`);
+        console.log(`   Message ID: ${data?.id}`);
 
         return {
           success: true,
-          messageId: data.id,
+          messageId: data?.id,
           message: 'Welcome email sent successfully via Resend'
         };
       }
@@ -789,7 +794,7 @@ class EmailService {
       // Use Resend if available (HTTP API - more reliable)
       if (this.useResend && this.resend) {
         const fromEmail = process.env.RESEND_FROM_EMAIL || process.env.SMTP_EMAIL || 'onboarding@resend.dev';
-        const data = await this.resend.emails.send({
+        const { data, error } = await this.resend.emails.send({
           from: `The Tropical <${fromEmail}>`,
           to: [adminEmail],
           subject: `📩 New Contact Message from ${name}`,
@@ -797,11 +802,16 @@ class EmailService {
           html: htmlContent
         });
 
+        if (error) {
+          console.error('❌ Resend failed to send contact email:', error.message || error);
+          throw new Error(error.message || 'Resend contact email failed');
+        }
+
         console.log(`✅ Contact email sent successfully via Resend!`);
         console.log(`   From: ${name} (${email})`);
         console.log(`   To: ${adminEmail}`);
-        console.log(`   Message ID: ${data.id}`);
-        return { success: true, messageId: data.id };
+        console.log(`   Message ID: ${data?.id}`);
+        return { success: true, messageId: data?.id };
       }
       
       // Fallback to SMTP

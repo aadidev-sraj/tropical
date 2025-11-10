@@ -30,6 +30,34 @@ export default function Product() {
 
   const product = data || undefined;
 
+  const handleAddToCart = (product?: BackendProduct) => {
+    if (!product) return;
+
+    if (product.sizes && product.sizes.length > 0 && !selectedSize) {
+      toast.error('Please select a size');
+      return;
+    }
+
+    addToCart({
+      id: product._id ? parseInt(product._id) : product.id ? Number(product.id) : 0,
+      name: product.name,
+      price: product.price,
+      image: firstImageUrl(product as any),
+      quantity: 1,
+      size: selectedSize || undefined,
+    });
+
+    toast.success(`${product.name} added to cart!`, {
+      description: selectedSize ? `Size: ${selectedSize}` : undefined,
+      action: {
+        label: 'View Cart',
+        onClick: () => {
+          window.location.href = '/cart';
+        },
+      },
+    });
+  };
+
   return (
     <div className="min-h-screen">
       <Navbar />
@@ -131,41 +159,20 @@ export default function Product() {
               )}
 
               <div className="flex items-center gap-3 flex-wrap">
-                {product.customizable ? (
+                <button
+                  className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-primary-foreground hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={product.sizes && product.sizes.length > 0 && !selectedSize}
+                  onClick={() => handleAddToCart(product)}
+                >
+                  🛒 Add to Cart
+                </button>
+                {product.customizable && (
                   <Link
                     to={`/customize-product/${slug}`}
-                    className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-primary-foreground hover:opacity-90"
+                    className="inline-flex items-center rounded-md border px-4 py-2 hover:bg-accent"
                   >
                     🎨 Customize This Product
                   </Link>
-                ) : (
-                  <button
-                    className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-primary-foreground hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={product.sizes && product.sizes.length > 0 && !selectedSize}
-                    onClick={() => {
-                      if (product.sizes && product.sizes.length > 0 && !selectedSize) {
-                        toast.error('Please select a size');
-                        return;
-                      }
-                      addToCart({
-                        id: product._id ? parseInt(product._id) : 0,
-                        name: product.name,
-                        price: product.price,
-                        image: firstImageUrl(product as any),
-                        quantity: 1,
-                        size: selectedSize || undefined,
-                      });
-                      toast.success(`${product.name} added to cart!`, {
-                        description: selectedSize ? `Size: ${selectedSize}` : undefined,
-                        action: {
-                          label: 'View Cart',
-                          onClick: () => window.location.href = '/cart'
-                        }
-                      });
-                    }}
-                  >
-                    🛒 Add to Cart
-                  </button>
                 )}
                 <Link
                   to="/cart"
