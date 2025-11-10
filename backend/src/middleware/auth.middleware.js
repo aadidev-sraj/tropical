@@ -69,5 +69,6 @@ module.exports = {
   auth, 
   authorize,
   protect: auth,  // Alias for compatibility
-  adminOnly 
+  adminOnly,
+  admin: adminOnly  // Alias for compatibility
 };
