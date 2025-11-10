@@ -9,7 +9,10 @@ class EmailService {
     if (process.env.SMTP_HOST && process.env.SMTP_PORT && 
         process.env.SMTP_EMAIL && process.env.SMTP_PASSWORD) {
       try {
-        this.transporter = nodemailer.createTransport({
+        // Detect if using Brevo (formerly Sendinblue)
+        const isBrevo = process.env.SMTP_HOST && process.env.SMTP_HOST.includes('brevo.com');
+        
+        const transportConfig = {
           host: process.env.SMTP_HOST,
           port: parseInt(process.env.SMTP_PORT),
           secure: process.env.SMTP_PORT === '465', // true for 465, false for other ports
@@ -17,22 +20,39 @@ class EmailService {
             user: process.env.SMTP_EMAIL,
             pass: process.env.SMTP_PASSWORD
           },
-          // Add timeout and debug options
-          connectionTimeout: 30000, // 30 seconds (increased from 10)
+          // Timeout settings - more lenient for cloud providers
+          connectionTimeout: 60000, // 60 seconds for initial connection
           greetingTimeout: 30000,
-          socketTimeout: 30000,
+          socketTimeout: 60000,
           debug: process.env.NODE_ENV !== 'production', // Enable debug in development
-          logger: process.env.NODE_ENV !== 'production', // Enable logger in development
-          // TLS options for better compatibility
-          tls: {
+          logger: process.env.NODE_ENV !== 'production' // Enable logger in development
+        };
+
+        // Brevo-specific optimizations
+        if (isBrevo) {
+          console.log('🔧 Detected Brevo SMTP - applying optimized settings...');
+          // Brevo works better without connection pooling on serverless/cloud platforms
+          transportConfig.pool = false;
+          // Brevo requires STARTTLS on port 587
+          if (process.env.SMTP_PORT === '587') {
+            transportConfig.requireTLS = true;
+            transportConfig.tls = {
+              ciphers: 'SSLv3',
+              rejectUnauthorized: false // Brevo has valid certs but some cloud platforms need this
+            };
+          }
+        } else {
+          // For other providers (Gmail, etc.), use pooling
+          transportConfig.pool = true;
+          transportConfig.maxConnections = 5;
+          transportConfig.maxMessages = 10;
+          transportConfig.tls = {
             rejectUnauthorized: true,
             minVersion: 'TLSv1.2'
-          },
-          // Pool settings for better connection management
-          pool: true,
-          maxConnections: 5,
-          maxMessages: 10
-        });
+          };
+        }
+
+        this.transporter = nodemailer.createTransport(transportConfig);
         
         console.log('📧 Email service transporter created');
         console.log('   SMTP Host:', process.env.SMTP_HOST);
