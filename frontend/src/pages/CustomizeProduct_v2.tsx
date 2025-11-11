@@ -535,8 +535,8 @@ export default function CustomizeProductV2() {
                   <span>
                     ₹{product.price + 
                       ((frontPhoto || backPhoto) ? 150 : 0) + 
-                      (frontDesign ? 100 : 0) + 
-                      (backDesign ? 100 : 0)}
+                      (frontDesign ? 00 : 0) + 
+                      (backDesign ? 00 : 0)}
                   </span>
                 </div>
               </div>
