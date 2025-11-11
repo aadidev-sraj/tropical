@@ -574,7 +574,7 @@ export default function CustomizeProduct() {
                 )}
                 <div className="flex justify-between font-bold text-lg border-t pt-2">
                   <span>Total</span>
-                  <span>₹{product.price + (hasAnyCustomization ? 200 : 0)}</span>
+                  <span>₹{product.price + (hasAnyCustomization ? 0 : 0)}</span>
                 </div>
               </div>
               <Button
