@@ -93,7 +93,7 @@ export default function CustomizableProducts() {
                     )}
                     {/* Customizable Badge */}
                     <div className="absolute top-2 right-2 bg-primary text-primary-foreground text-xs font-semibold px-2 py-1 rounded">
-                      🎨 Customizable
+                      Customizable
                     </div>
                   </div>
 

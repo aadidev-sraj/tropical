@@ -419,7 +419,7 @@ export default function CustomizeProductV2() {
             {/* Admin Design Selection */}
             <div className="bg-card p-6 rounded-lg shadow">
               <h3 className="font-semibold text-lg mb-4">
-                🎨 Select Design ({view === 'front' ? 'Front' : 'Back'})
+                Select Design ({view === 'front' ? 'Front' : 'Back'})
               </h3>
               {designs.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No designs available</p>

@@ -347,10 +347,10 @@ export default function Payment() {
               {isProcessing ? "Processing..." : !isRazorpayLoaded ? "Loading..." : "Pay with Razorpay"}
             </button>
             <p className="text-xs text-muted-foreground text-center mt-2">
-              💳 Secure payment via Razorpay
+              Secure payment via Razorpay
             </p>
             <p className="text-xs text-muted-foreground text-center mt-1">
-              🧾 You'll receive an email confirmation with your order details
+              You'll receive an email confirmation with your order details
             </p>
           </div>
         </div>

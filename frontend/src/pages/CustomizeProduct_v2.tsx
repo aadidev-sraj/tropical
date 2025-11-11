@@ -451,7 +451,7 @@ export default function CustomizeProductV2() {
             {/* Admin Design Selection */}
             <div className="bg-card p-6 rounded-lg shadow">
               <h3 className="font-semibold text-lg mb-4">
-                🎨 Admin Designs ({view === 'front' ? 'Front' : 'Back'})
+                Admin Designs ({view === 'front' ? 'Front' : 'Back'})
               </h3>
               <p className="text-xs text-muted-foreground mb-3">
                 Choose from approved designs (Optional)

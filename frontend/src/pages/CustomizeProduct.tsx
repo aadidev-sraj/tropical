@@ -464,7 +464,7 @@ export default function CustomizeProduct() {
             {/* Design Upload */}
             <div className="bg-card p-6 rounded-lg shadow">
               <h3 className="font-semibold text-lg mb-4">
-                🎨 Upload Your Design ({view === 'front' ? 'Front' : 'Back'})
+                Upload Your Design ({view === 'front' ? 'Front' : 'Back'})
               </h3>
               <div className="space-y-3">
                 <div>

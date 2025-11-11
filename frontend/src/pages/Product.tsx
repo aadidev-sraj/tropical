@@ -164,14 +164,14 @@ export default function Product() {
                   disabled={product.sizes && product.sizes.length > 0 && !selectedSize}
                   onClick={() => handleAddToCart(product)}
                 >
-                  🛒 Add to Cart
+                  Add to Cart
                 </button>
                 {product.customizable && (
                   <Link
                     to={`/customize-product/${slug}`}
                     className="inline-flex items-center rounded-md border px-4 py-2 hover:bg-accent"
                   >
-                    🎨 Customize This Product
+                    Customize This Product
                   </Link>
                 )}
                 <Link

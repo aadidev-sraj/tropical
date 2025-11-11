@@ -155,7 +155,7 @@ class EmailService {
           <!-- Header -->
           <div style="background: #1a1a1a; padding: 40px 30px; text-align: center;">
             <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -0.5px;">The Tropical</h1>
-            <p style="color: #40513E; margin: 10px 0 0 0; font-size: 14px; letter-spacing: 2px; text-transform: uppercase;">Welcome! 🌴</p>
+            <p style="color: #40513E; margin: 10px 0 0 0; font-size: 14px; letter-spacing: 2px; text-transform: uppercase;">Welcome!</p>
           </div>
           
           <!-- Body -->
@@ -177,7 +177,7 @@ class EmailService {
             </div>
 
             <div style="text-align: center; padding: 30px 0 0 0; border-top: 1px solid #e5e5e5;">
-              <p style="color: #1a1a1a; font-size: 16px; margin: 0 0 10px 0; font-weight: 600;">Welcome to The Tropical! 🌴</p>
+              <p style="color: #1a1a1a; font-size: 16px; margin: 0 0 10px 0; font-weight: 600;">Welcome to The Tropical!</p>
               <p style="color: #999; font-size: 13px; margin: 0;">If you have any questions, feel free to contact us.</p>
             </div>
           </div>
@@ -199,7 +199,7 @@ class EmailService {
         const { data, error } = await this.resend.emails.send({
           from: `The Tropical <${fromEmail}>`,
           to: [email],
-          subject: '🌴 Welcome to The Tropical!',
+          subject: 'Welcome to The Tropical',
           html: htmlContent
         });
 
@@ -223,7 +223,7 @@ class EmailService {
       const mailOptions = {
         from: `"The Tropical" <${process.env.SMTP_EMAIL}>`,
         to: email,
-        subject: '🌴 Welcome to The Tropical!',
+        subject: 'Welcome to The Tropical',
         html: htmlContent
       };
 
@@ -281,7 +281,7 @@ class EmailService {
         if (item.customization && (item.customization.frontImageUrl || item.customization.backImageUrl)) {
           customizationImagesHtml += `
             <div style="margin: 20px 0; padding: 20px; background: #f9f9f9; border-radius: 4px; border-left: 4px solid #40513E;">
-              <h3 style="color: #1a1a1a; margin: 0 0 15px 0; font-size: 16px; font-weight: 700;">🎨 Customized: ${item.name}</h3>
+              <h3 style="color: #1a1a1a; margin: 0 0 15px 0; font-size: 16px; font-weight: 700;">Customized: ${item.name}</h3>
               <div style="display: flex; gap: 15px; flex-wrap: wrap;">
           `;
           
@@ -442,7 +442,7 @@ class EmailService {
             
             <!-- Footer Message -->
             <div style="text-align: center; padding: 30px 0 0 0; border-top: 1px solid #e5e5e5;">
-              <p style="color: #1a1a1a; font-size: 16px; margin: 0 0 10px 0; font-weight: 600;">Thank you for shopping with The Tropical! 🌴</p>
+              <p style="color: #1a1a1a; font-size: 16px; margin: 0 0 10px 0; font-weight: 600;">Thank you for shopping with The Tropical!</p>
               <p style="color: #999; font-size: 13px; margin: 0;">If you have any questions, feel free to contact us.</p>
             </div>
           </div>
@@ -745,7 +745,7 @@ class EmailService {
         const { data, error } = await this.resend.emails.send({
           from: `The Tropical <${fromEmail}>`,
           to: [adminEmail],
-          subject: `🔔 New Order #${orderNumber} - ${customerInfo.name}`,
+          subject: `New Order #${orderNumber} - ${customerInfo.name}`,
           html: htmlContent
         });
 
@@ -770,7 +770,7 @@ class EmailService {
       const mailOptions = {
         from: `"${process.env.FROM_NAME || 'Tropical Store'}" <${process.env.SMTP_EMAIL}>`,
         to: adminEmail,
-        subject: `🔔 New Order #${orderNumber} - ${customerInfo.name}`,
+        subject: `New Order #${orderNumber} - ${customerInfo.name}`,
         html: htmlContent,
         attachments: attachments.length > 0 ? attachments : undefined
       };
@@ -823,13 +823,13 @@ class EmailService {
           <!-- Header -->
           <div style="background: #1a1a1a; padding: 40px 30px; text-align: center;">
             <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -0.5px;">The Tropical</h1>
-            <p style="color: #40513E; margin: 10px 0 0 0; font-size: 14px; letter-spacing: 2px; text-transform: uppercase;">New Contact Message 📩</p>
+            <p style="color: #40513E; margin: 10px 0 0 0; font-size: 14px; letter-spacing: 2px; text-transform: uppercase;">New Contact Message</p>
           </div>
           
           <!-- Body -->
           <div style="background: #ffffff; padding: 40px 30px;">
             <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 0 0 25px 0; border-radius: 4px;">
-              <p style="margin: 0; font-weight: 600; color: #856404;">⚡ Someone is trying to reach you!</p>
+              <p style="margin: 0; font-weight: 600; color: #856404;">Someone is trying to reach you!</p>
             </div>
             
             <div style="background: #f9f9f9; padding: 20px; border-radius: 4px; margin: 0 0 25px 0; border-left: 4px solid #40513E;">
@@ -872,7 +872,7 @@ ${message}
         const { data, error } = await this.resend.emails.send({
           from: `The Tropical <${fromEmail}>`,
           to: [adminEmail],
-          subject: `📩 New Contact Message from ${name}`,
+          subject: `New Contact Message from ${name}`,
           replyTo: email,
           html: htmlContent
         });
@@ -893,7 +893,7 @@ ${message}
       const mailOptions = {
         from: `"The Tropical" <${process.env.SMTP_EMAIL}>`,
         to: adminEmail,
-        subject: `📩 New Contact Message from ${name}`,
+        subject: `New Contact Message from ${name}`,
         replyTo: email,
         html: htmlContent
       };
