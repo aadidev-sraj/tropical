@@ -18,6 +18,7 @@ const contactAdminRoutes = require('./routes/contact-admin.routes');
 const designRoutes = require('./routes/design.routes');
 const emailTestRoutes = require('./routes/email-test.routes');
 const paymentRoutes = require('./routes/payment.routes');
+const settingsRoutes = require('./routes/settings.routes');
 
 // Initialize express app
 const app = express();
@@ -102,6 +103,7 @@ app.use('/api/admin/contacts', contactAdminRoutes);
 app.use('/api/designs', designRoutes);
 app.use('/api/email', emailTestRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
