@@ -153,17 +153,18 @@ class EmailService {
         </head>
         <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif; line-height: 1.6; color: #1a1a1a; max-width: 600px; margin: 0 auto; padding: 0; background-color: #f5f5f5;">
           <!-- Header -->
-          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center;">
-            <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -0.5px;">Welcome to The Tropical! 🌴</h1>
+          <div style="background: #1a1a1a; padding: 40px 30px; text-align: center;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -0.5px;">The Tropical</h1>
+            <p style="color: #40513E; margin: 10px 0 0 0; font-size: 14px; letter-spacing: 2px; text-transform: uppercase;">Welcome! 🌴</p>
           </div>
           
           <!-- Body -->
           <div style="background: #ffffff; padding: 40px 30px;">
             <p style="font-size: 18px; margin: 0 0 10px 0;">Hello <strong>${name}</strong>,</p>
-            <p style="color: #666; margin: 0 0 20px 0;">Thank you for joining The Tropical! We're excited to have you as part of our community.</p>
+            <p style="color: #666; margin: 0 0 30px 0;">Thank you for joining The Tropical! We're excited to have you as part of our community.</p>
             
-            <div style="background: #f9f9f9; padding: 25px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #667eea;">
-              <h2 style="color: #1a1a1a; margin: 0 0 15px 0; font-size: 20px; font-weight: 700;">What's Next?</h2>
+            <div style="background: #f9f9f9; padding: 20px; border-radius: 4px; margin: 0 0 25px 0; border-left: 4px solid #40513E;">
+              <h2 style="color: #1a1a1a; margin: 0 0 15px 0; font-size: 18px; font-weight: 700;">What's Next?</h2>
               <ul style="margin: 0; padding-left: 20px; color: #666;">
                 <li style="margin-bottom: 10px;">Browse our latest collection of premium apparel</li>
                 <li style="margin-bottom: 10px;">Customize products with your own designs</li>
@@ -172,22 +173,19 @@ class EmailService {
             </div>
 
             <div style="text-align: center; margin: 30px 0;">
-              <a href="https://thetropical.in" style="display: inline-block; background: #667eea; color: #ffffff; padding: 14px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">Start Shopping</a>
+              <a href="https://thetropical.in" style="display: inline-block; background: #40513E; color: #ffffff; padding: 14px 30px; text-decoration: none; border-radius: 4px; font-weight: 600; font-size: 16px;">Start Shopping</a>
             </div>
 
-            <p style="color: #999; font-size: 14px; margin: 30px 0 0 0; padding-top: 20px; border-top: 1px solid #eee;">
-              If you have any questions, feel free to reach out to us anytime.
-            </p>
+            <div style="text-align: center; padding: 30px 0 0 0; border-top: 1px solid #e5e5e5;">
+              <p style="color: #1a1a1a; font-size: 16px; margin: 0 0 10px 0; font-weight: 600;">Welcome to The Tropical! 🌴</p>
+              <p style="color: #999; font-size: 13px; margin: 0;">If you have any questions, feel free to contact us.</p>
+            </div>
           </div>
           
           <!-- Footer -->
-          <div style="background: #1a1a1a; padding: 25px 30px; text-align: center;">
-            <p style="color: #999; margin: 0; font-size: 13px;">
-              © ${new Date().getFullYear()} The Tropical. All rights reserved.
-            </p>
-            <p style="color: #666; margin: 10px 0 0 0; font-size: 12px;">
-              You're receiving this because you signed up at thetropical.in
-            </p>
+          <div style="background: #1a1a1a; padding: 20px 30px; text-align: center;">
+            <p style="color: #999; font-size: 12px; margin: 0;">© ${new Date().getFullYear()} The Tropical. All rights reserved.</p>
+            <p style="color: #999; font-size: 12px; margin: 5px 0 0 0;"><a href="https://www.thetropical.in" style="color: #40513E; text-decoration: none;">www.thetropical.in</a></p>
           </div>
         </body>
         </html>
@@ -458,6 +456,36 @@ class EmailService {
         </html>
       `;
 
+      console.log(`📤 Sending order confirmation email to ${customerInfo.email}...`);
+      
+      // Use Resend if available (HTTP API - more reliable)
+      if (this.useResend && this.resend) {
+        const fromEmail = process.env.RESEND_FROM_EMAIL || process.env.SMTP_EMAIL || 'onboarding@resend.dev';
+        const { data, error } = await this.resend.emails.send({
+          from: `The Tropical <${fromEmail}>`,
+          to: [customerInfo.email],
+          subject: `Order Confirmation - ${orderNumber}`,
+          html: htmlContent
+        });
+
+        if (error) {
+          console.error('❌ Resend failed to send order confirmation:', error.message || error);
+          throw new Error(error.message || 'Resend order confirmation failed');
+        }
+
+        console.log(`✅ Order confirmation sent successfully via Resend!`);
+        console.log(`   To: ${customerInfo.email}`);
+        console.log(`   Order: ${orderNumber}`);
+        console.log(`   Message ID: ${data?.id}`);
+
+        return {
+          success: true,
+          messageId: data?.id,
+          message: 'Order confirmation sent successfully via Resend'
+        };
+      }
+      
+      // Fallback to SMTP
       const mailOptions = {
         from: `"${process.env.FROM_NAME || 'Tropical Store'}" <${process.env.SMTP_EMAIL}>`,
         to: customerInfo.email,
@@ -467,12 +495,14 @@ class EmailService {
       };
 
       const info = await this.transporter.sendMail(mailOptions);
-      console.log(`Customer email sent successfully. Message ID: ${info.messageId}`);
+      console.log(`✅ Order confirmation sent successfully via SMTP!`);
+      console.log(`   To: ${customerInfo.email}`);
+      console.log(`   Message ID: ${info.messageId}`);
       
       return {
         success: true,
         messageId: info.messageId,
-        message: 'Email notification sent successfully'
+        message: 'Order confirmation sent successfully via SMTP'
       };
     } catch (error) {
       console.error('Error sending email notification:', error);
@@ -707,6 +737,36 @@ class EmailService {
         </html>
       `;
 
+      console.log(`📤 Sending admin order notification to ${adminEmail}...`);
+      
+      // Use Resend if available (HTTP API - more reliable)
+      if (this.useResend && this.resend) {
+        const fromEmail = process.env.RESEND_FROM_EMAIL || process.env.SMTP_EMAIL || 'onboarding@resend.dev';
+        const { data, error } = await this.resend.emails.send({
+          from: `The Tropical <${fromEmail}>`,
+          to: [adminEmail],
+          subject: `🔔 New Order #${orderNumber} - ${customerInfo.name}`,
+          html: htmlContent
+        });
+
+        if (error) {
+          console.error('❌ Resend failed to send admin notification:', error.message || error);
+          throw new Error(error.message || 'Resend admin notification failed');
+        }
+
+        console.log(`✅ Admin notification sent successfully via Resend!`);
+        console.log(`   To: ${adminEmail}`);
+        console.log(`   Order: ${orderNumber}`);
+        console.log(`   Message ID: ${data?.id}`);
+
+        return {
+          success: true,
+          messageId: data?.id,
+          message: 'Admin notification sent successfully via Resend'
+        };
+      }
+      
+      // Fallback to SMTP
       const mailOptions = {
         from: `"${process.env.FROM_NAME || 'Tropical Store'}" <${process.env.SMTP_EMAIL}>`,
         to: adminEmail,
@@ -716,12 +776,14 @@ class EmailService {
       };
 
       const info = await this.transporter.sendMail(mailOptions);
-      console.log(`Admin email sent successfully. Message ID: ${info.messageId}`);
+      console.log(`✅ Admin notification sent successfully via SMTP!`);
+      console.log(`   To: ${adminEmail}`);
+      console.log(`   Message ID: ${info.messageId}`);
       
       return {
         success: true,
         messageId: info.messageId,
-        message: 'Admin email notification sent successfully'
+        message: 'Admin notification sent successfully via SMTP'
       };
     } catch (error) {
       console.error('Error sending admin email notification:', error);
@@ -757,33 +819,46 @@ class EmailService {
           <meta charset="utf-8">
           <title>New Contact Message</title>
         </head>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 700px; margin: 0 auto; padding: 20px;">
-          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-            <h1 style="color: white; margin: 0;">📩 NEW CONTACT MESSAGE</h1>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif; line-height: 1.6; color: #1a1a1a; max-width: 600px; margin: 0 auto; padding: 0; background-color: #f5f5f5;">
+          <!-- Header -->
+          <div style="background: #1a1a1a; padding: 40px 30px; text-align: center;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -0.5px;">The Tropical</h1>
+            <p style="color: #40513E; margin: 10px 0 0 0; font-size: 14px; letter-spacing: 2px; text-transform: uppercase;">New Contact Message 📩</p>
           </div>
           
-          <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
-            <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin-bottom: 20px; border-radius: 5px;">
-              <p style="margin: 0; font-weight: bold;">⚡ Someone is trying to reach you!</p>
+          <!-- Body -->
+          <div style="background: #ffffff; padding: 40px 30px;">
+            <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 0 0 25px 0; border-radius: 4px;">
+              <p style="margin: 0; font-weight: 600; color: #856404;">⚡ Someone is trying to reach you!</p>
             </div>
             
-            <div style="background: white; padding: 20px; border-radius: 5px; margin: 20px 0;">
-              <h2 style="color: #667eea; margin-top: 0;">Contact Information</h2>
-              <p><strong>Name:</strong> ${name}</p>
-              <p><strong>Email:</strong> <a href="mailto:${email}" style="color: #667eea;">${email}</a></p>
-              <p><strong>Date:</strong> ${new Date().toLocaleString()}</p>
+            <div style="background: #f9f9f9; padding: 20px; border-radius: 4px; margin: 0 0 25px 0; border-left: 4px solid #40513E;">
+              <h2 style="color: #1a1a1a; margin: 0 0 15px 0; font-size: 18px; font-weight: 700;">Contact Information</h2>
+              <p style="margin: 5px 0; color: #666;"><strong style="color: #1a1a1a;">Name:</strong> ${name}</p>
+              <p style="margin: 5px 0; color: #666;"><strong style="color: #1a1a1a;">Email:</strong> <a href="mailto:${email}" style="color: #40513E; text-decoration: none;">${email}</a></p>
+              <p style="margin: 5px 0; color: #666;"><strong style="color: #1a1a1a;">Date:</strong> ${new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
             </div>
             
-            <div style="background: white; padding: 20px; border-radius: 5px; margin: 20px 0;">
-              <h2 style="color: #667eea; margin-top: 0;">Message</h2>
-              <div style="white-space: pre-wrap; background: #f7f7f7; padding: 15px; border-radius: 6px; border-left: 3px solid #667eea;">
-                ${message}
+            <div style="background: #f9f9f9; padding: 20px; border-radius: 4px; margin: 0 0 25px 0; border-left: 4px solid #40513E;">
+              <h2 style="color: #1a1a1a; margin: 0 0 15px 0; font-size: 18px; font-weight: 700;">Message</h2>
+              <div style="white-space: pre-wrap; background: #ffffff; padding: 15px; border-radius: 4px; border: 1px solid #e5e5e5; color: #666;">
+${message}
               </div>
             </div>
 
-            <div style="text-align: center; margin-top: 25px; padding-top: 20px; border-top: 1px solid #ddd;">
-              <a href="mailto:${email}" style="display: inline-block; background: #667eea; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: 600;">Reply to ${name}</a>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="mailto:${email}" style="display: inline-block; background: #40513E; color: #ffffff; padding: 14px 30px; text-decoration: none; border-radius: 4px; font-weight: 600; font-size: 16px;">Reply to ${name}</a>
             </div>
+
+            <div style="text-align: center; padding: 30px 0 0 0; border-top: 1px solid #e5e5e5;">
+              <p style="color: #999; font-size: 13px; margin: 0;">This is an automated notification from your website contact form.</p>
+            </div>
+          </div>
+          
+          <!-- Footer -->
+          <div style="background: #1a1a1a; padding: 20px 30px; text-align: center;">
+            <p style="color: #999; font-size: 12px; margin: 0;">© ${new Date().getFullYear()} The Tropical. All rights reserved.</p>
+            <p style="color: #999; font-size: 12px; margin: 5px 0 0 0;"><a href="https://www.thetropical.in" style="color: #40513E; text-decoration: none;">www.thetropical.in</a></p>
           </div>
         </body>
         </html>

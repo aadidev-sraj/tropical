@@ -153,7 +153,7 @@ export default function Product() {
               {product.customizable && (
                 <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-md">
                   <p className="text-sm text-blue-800 dark:text-blue-200">
-                    ✨ This product is available for customization! You can add your own photos and choose from admin-approved designs.
+                    This product is available for customization! You can add your own photos and designs.
                   </p>
                 </div>
               )}
