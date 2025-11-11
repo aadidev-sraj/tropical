@@ -100,6 +100,75 @@ class EmailService {
     }
   }
 
+  getDesignDetails(customization, side) {
+    if (!customization) return null;
+
+    const designKey = `${side}Design`;
+    const imageKey = `${side}ImageUrl`;
+    const positionKey = `${side}DesignPos`;
+    const sizeKey = `${side}DesignSize`;
+    const rotationKey = `${side}DesignRotation`;
+
+    const rawDesign = customization[designKey];
+    const fallbackImage = customization[imageKey];
+    const position = customization[positionKey];
+    const sizeValue = customization[sizeKey];
+    const rotationValue = customization[rotationKey];
+
+    let imageData = null;
+    let x;
+    let y;
+    let width;
+    let height;
+    let rotation;
+
+    if (rawDesign) {
+      if (typeof rawDesign === 'string') {
+        imageData = rawDesign;
+      } else if (typeof rawDesign === 'object') {
+        imageData = rawDesign.imageUrl || fallbackImage || null;
+        x = rawDesign.x;
+        y = rawDesign.y;
+        width = rawDesign.width;
+        height = rawDesign.height;
+        rotation = rawDesign.rotation;
+      }
+    }
+
+    if (!imageData && typeof fallbackImage === 'string') {
+      imageData = fallbackImage;
+    }
+
+    if (position && typeof position === 'object') {
+      if (position.x !== undefined) x = position.x;
+      if (position.y !== undefined) y = position.y;
+    }
+
+    if (sizeValue !== undefined) {
+      if (typeof sizeValue === 'number') {
+        width = width ?? sizeValue;
+      } else if (typeof sizeValue === 'object') {
+        if (sizeValue.width !== undefined) width = sizeValue.width;
+        if (sizeValue.height !== undefined) height = sizeValue.height;
+      }
+    }
+
+    if (rotationValue !== undefined) {
+      rotation = rotationValue;
+    }
+
+    if (!imageData) return null;
+
+    return {
+      imageData,
+      x,
+      y,
+      width,
+      height,
+      rotation
+    };
+  }
+
   async verifyConnection() {
     if (!this.transporter) {
       console.warn('⚠ Cannot verify email connection - transporter not initialized');
@@ -278,90 +347,97 @@ class EmailService {
         `;
         
         // Add customization images if present
-        if (item.customization && (item.customization.frontImageUrl || item.customization.backImageUrl)) {
+        const frontDetails = this.getDesignDetails(item.customization, 'front');
+        const backDetails = this.getDesignDetails(item.customization, 'back');
+
+        if (frontDetails || backDetails) {
           customizationImagesHtml += `
             <div style="margin: 20px 0; padding: 20px; background: #f9f9f9; border-radius: 4px; border-left: 4px solid #40513E;">
               <h3 style="color: #1a1a1a; margin: 0 0 15px 0; font-size: 16px; font-weight: 700;">Customized: ${item.name}</h3>
               <div style="display: flex; gap: 15px; flex-wrap: wrap;">
           `;
-          
-          // Handle front customization (new customer upload format or old format)
-          if (item.customization.frontDesign || item.customization.frontImageUrl) {
-            let frontImageData = null;
-            let frontImageInfo = '';
-            
-            if (item.customization.frontDesign) {
-              // New format: customer uploaded design with positioning
-              frontImageData = item.customization.frontDesign.imageUrl;
-              frontImageInfo = `<p style="margin: 5px 0 10px 0; font-size: 12px; color: #888;">Position: X:${item.customization.frontDesign.x.toFixed(1)}% Y:${item.customization.frontDesign.y.toFixed(1)}% | Size: ${item.customization.frontDesign.width.toFixed(1)}x${item.customization.frontDesign.height.toFixed(1)}% | Rotation: ${item.customization.frontDesign.rotation}°</p>`;
-            } else {
-              // Old format: admin design
-              frontImageData = item.customization.frontImageUrl.startsWith('http') 
-                ? item.customization.frontImageUrl 
-                : `${process.env.BACKEND_URL || 'http://localhost:5000'}${item.customization.frontImageUrl}`;
+
+          if (frontDetails) {
+            const frontInfoParts = [];
+            if (frontDetails.x !== undefined && frontDetails.y !== undefined) {
+              frontInfoParts.push(`Position: X:${frontDetails.x.toFixed(1)}% Y:${frontDetails.y.toFixed(1)}%`);
             }
-            
+            if (frontDetails.width !== undefined || frontDetails.height !== undefined) {
+              const widthText = frontDetails.width !== undefined ? frontDetails.width.toFixed(1) : '—';
+              const heightText = frontDetails.height !== undefined ? frontDetails.height.toFixed(1) : '—';
+              frontInfoParts.push(`Size: ${widthText}×${heightText}%`);
+            }
+            if (frontDetails.rotation !== undefined) {
+              frontInfoParts.push(`Rotation: ${frontDetails.rotation}°`);
+            }
+            const frontImageInfo = frontInfoParts.length > 0
+              ? `<p style="margin: 5px 0 10px 0; font-size: 12px; color: #888;">${frontInfoParts.join(' | ')}</p>`
+              : '';
+
             customizationImagesHtml += `
               <div style="flex: 1; min-width: 200px;">
                 <p style="margin: 0 0 5px 0; font-weight: 600; color: #666; font-size: 14px;">Front View:</p>
                 ${frontImageInfo}
-                <img src="${frontImageData}" alt="Front customization" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;" />
+                <img src="${frontDetails.imageData}" alt="Front customization" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;" />
               </div>
             `;
-            
-            // Add as attachment (handle base64 data)
-            if (frontImageData.startsWith('data:image')) {
+
+            if (frontDetails.imageData.startsWith('data:image')) {
               attachments.push({
                 filename: `${item.name}-front-${index + 1}.png`,
-                content: frontImageData.split('base64,')[1],
+                content: frontDetails.imageData.split('base64,')[1],
                 encoding: 'base64',
                 cid: `front-${index}@customization`
               });
             } else {
               attachments.push({
                 filename: `${item.name}-front-${index + 1}.png`,
-                path: frontImageData,
+                path: frontDetails.imageData.startsWith('http')
+                  ? frontDetails.imageData
+                  : `${process.env.BACKEND_URL || 'http://localhost:5000'}${frontDetails.imageData}`,
                 cid: `front-${index}@customization`
               });
             }
           }
           
-          // Handle back customization (new customer upload format or old format)
-          if (item.customization.backDesign || item.customization.backImageUrl) {
-            let backImageData = null;
-            let backImageInfo = '';
-            
-            if (item.customization.backDesign) {
-              // New format: customer uploaded design with positioning
-              backImageData = item.customization.backDesign.imageUrl;
-              backImageInfo = `<p style="margin: 5px 0 10px 0; font-size: 12px; color: #888;">Position: X:${item.customization.backDesign.x.toFixed(1)}% Y:${item.customization.backDesign.y.toFixed(1)}% | Size: ${item.customization.backDesign.width.toFixed(1)}x${item.customization.backDesign.height.toFixed(1)}% | Rotation: ${item.customization.backDesign.rotation}°</p>`;
-            } else {
-              // Old format: admin design
-              backImageData = item.customization.backImageUrl.startsWith('http') 
-                ? item.customization.backImageUrl 
-                : `${process.env.BACKEND_URL || 'http://localhost:5000'}${item.customization.backImageUrl}`;
+          if (backDetails) {
+            const backInfoParts = [];
+            if (backDetails.x !== undefined && backDetails.y !== undefined) {
+              backInfoParts.push(`Position: X:${backDetails.x.toFixed(1)}% Y:${backDetails.y.toFixed(1)}%`);
             }
-            
+            if (backDetails.width !== undefined || backDetails.height !== undefined) {
+              const widthText = backDetails.width !== undefined ? backDetails.width.toFixed(1) : '—';
+              const heightText = backDetails.height !== undefined ? backDetails.height.toFixed(1) : '—';
+              backInfoParts.push(`Size: ${widthText}×${heightText}%`);
+            }
+            if (backDetails.rotation !== undefined) {
+              backInfoParts.push(`Rotation: ${backDetails.rotation}°`);
+            }
+            const backImageInfo = backInfoParts.length > 0
+              ? `<p style="margin: 5px 0 10px 0; font-size: 12px; color: #888;">${backInfoParts.join(' | ')}</p>`
+              : '';
+
             customizationImagesHtml += `
               <div style="flex: 1; min-width: 200px;">
                 <p style="margin: 0 0 5px 0; font-weight: 600; color: #666; font-size: 14px;">Back View:</p>
                 ${backImageInfo}
-                <img src="${backImageData}" alt="Back customization" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;" />
+                <img src="${backDetails.imageData}" alt="Back customization" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;" />
               </div>
             `;
-            
-            // Add as attachment (handle base64 data)
-            if (backImageData.startsWith('data:image')) {
+
+            if (backDetails.imageData.startsWith('data:image')) {
               attachments.push({
                 filename: `${item.name}-back-${index + 1}.png`,
-                content: backImageData.split('base64,')[1],
+                content: backDetails.imageData.split('base64,')[1],
                 encoding: 'base64',
                 cid: `back-${index}@customization`
               });
             } else {
               attachments.push({
                 filename: `${item.name}-back-${index + 1}.png`,
-                path: backImageData,
+                path: backDetails.imageData.startsWith('http')
+                  ? backDetails.imageData
+                  : `${process.env.BACKEND_URL || 'http://localhost:5000'}${backDetails.imageData}`,
                 cid: `back-${index}@customization`
               });
             }
@@ -545,93 +621,97 @@ class EmailService {
         `;
         
         // Add customization images if present (both old format and new customer upload format)
-        const hasFrontCustomization = item.customization && (item.customization.frontImageUrl || item.customization.frontDesign);
-        const hasBackCustomization = item.customization && (item.customization.backImageUrl || item.customization.backDesign);
-        
-        if (hasFrontCustomization || hasBackCustomization) {
+        const frontDetails = this.getDesignDetails(item.customization, 'front');
+        const backDetails = this.getDesignDetails(item.customization, 'back');
+
+        if (frontDetails || backDetails) {
           customizationImagesHtml += `
             <div style="margin: 20px 0; padding: 20px; background: #f9f9f9; border-radius: 4px; border-left: 4px solid #40513E;">
               <h3 style="color: #1a1a1a; margin: 0 0 15px 0; font-size: 16px; font-weight: 700;">Customized: ${item.name}</h3>
               <div style="display: flex; gap: 15px; flex-wrap: wrap;">
           `;
-          
-          // Handle front customization (new customer upload format or old format)
-          if (item.customization.frontDesign || item.customization.frontImageUrl) {
-            let frontImageData = null;
-            let frontImageInfo = '';
-            
-            if (item.customization.frontDesign) {
-              // New format: customer uploaded design with positioning
-              frontImageData = item.customization.frontDesign.imageUrl;
-              frontImageInfo = `<p style="margin: 5px 0 10px 0; font-size: 12px; color: #888;">Position: X:${item.customization.frontDesign.x.toFixed(1)}% Y:${item.customization.frontDesign.y.toFixed(1)}% | Size: ${item.customization.frontDesign.width.toFixed(1)}x${item.customization.frontDesign.height.toFixed(1)}% | Rotation: ${item.customization.frontDesign.rotation}°</p>`;
-            } else {
-              // Old format: admin design
-              frontImageData = item.customization.frontImageUrl.startsWith('http') 
-                ? item.customization.frontImageUrl 
-                : `${process.env.BACKEND_URL || 'http://localhost:5000'}${item.customization.frontImageUrl}`;
+
+          if (frontDetails) {
+            const frontInfoParts = [];
+            if (frontDetails.x !== undefined && frontDetails.y !== undefined) {
+              frontInfoParts.push(`Position: X:${frontDetails.x.toFixed(1)}% Y:${frontDetails.y.toFixed(1)}%`);
             }
-            
+            if (frontDetails.width !== undefined || frontDetails.height !== undefined) {
+              const widthText = frontDetails.width !== undefined ? frontDetails.width.toFixed(1) : '—';
+              const heightText = frontDetails.height !== undefined ? frontDetails.height.toFixed(1) : '—';
+              frontInfoParts.push(`Size: ${widthText}×${heightText}%`);
+            }
+            if (frontDetails.rotation !== undefined) {
+              frontInfoParts.push(`Rotation: ${frontDetails.rotation}°`);
+            }
+            const frontImageInfo = frontInfoParts.length > 0
+              ? `<p style="margin: 5px 0 10px 0; font-size: 12px; color: #888;">${frontInfoParts.join(' | ')}</p>`
+              : '';
+
             customizationImagesHtml += `
               <div style="flex: 1; min-width: 200px;">
                 <p style="margin: 0 0 5px 0; font-weight: 600; color: #666; font-size: 14px;">Front View:</p>
                 ${frontImageInfo}
-                <img src="${frontImageData}" alt="Front customization" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;" />
+                <img src="${frontDetails.imageData}" alt="Front customization" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;" />
               </div>
             `;
-            
-            // Add as attachment (handle base64 data)
-            if (frontImageData.startsWith('data:image')) {
+
+            if (frontDetails.imageData.startsWith('data:image')) {
               attachments.push({
                 filename: `${item.name}-front-${index + 1}.png`,
-                content: frontImageData.split('base64,')[1],
+                content: frontDetails.imageData.split('base64,')[1],
                 encoding: 'base64',
                 cid: `admin-front-${index}@customization`
               });
             } else {
               attachments.push({
                 filename: `${item.name}-front-${index + 1}.png`,
-                path: frontImageData,
+                path: frontDetails.imageData.startsWith('http')
+                  ? frontDetails.imageData
+                  : `${process.env.BACKEND_URL || 'http://localhost:5000'}${frontDetails.imageData}`,
                 cid: `admin-front-${index}@customization`
               });
             }
           }
           
-          // Handle back customization (new customer upload format or old format)
-          if (item.customization.backDesign || item.customization.backImageUrl) {
-            let backImageData = null;
-            let backImageInfo = '';
-            
-            if (item.customization.backDesign) {
-              // New format: customer uploaded design with positioning
-              backImageData = item.customization.backDesign.imageUrl;
-              backImageInfo = `<p style="margin: 5px 0 10px 0; font-size: 12px; color: #888;">Position: X:${item.customization.backDesign.x.toFixed(1)}% Y:${item.customization.backDesign.y.toFixed(1)}% | Size: ${item.customization.backDesign.width.toFixed(1)}x${item.customization.backDesign.height.toFixed(1)}% | Rotation: ${item.customization.backDesign.rotation}°</p>`;
-            } else {
-              // Old format: admin design
-              backImageData = item.customization.backImageUrl.startsWith('http') 
-                ? item.customization.backImageUrl 
-                : `${process.env.BACKEND_URL || 'http://localhost:5000'}${item.customization.backImageUrl}`;
+          if (backDetails) {
+            const backInfoParts = [];
+            if (backDetails.x !== undefined && backDetails.y !== undefined) {
+              backInfoParts.push(`Position: X:${backDetails.x.toFixed(1)}% Y:${backDetails.y.toFixed(1)}%`);
             }
-            
+            if (backDetails.width !== undefined || backDetails.height !== undefined) {
+              const widthText = backDetails.width !== undefined ? backDetails.width.toFixed(1) : '—';
+              const heightText = backDetails.height !== undefined ? backDetails.height.toFixed(1) : '—';
+              backInfoParts.push(`Size: ${widthText}×${heightText}%`);
+            }
+            if (backDetails.rotation !== undefined) {
+              backInfoParts.push(`Rotation: ${backDetails.rotation}°`);
+            }
+            const backImageInfo = backInfoParts.length > 0
+              ? `<p style="margin: 5px 0 10px 0; font-size: 12px; color: #888;">${backInfoParts.join(' | ')}</p>`
+              : '';
+
             customizationImagesHtml += `
               <div style="flex: 1; min-width: 200px;">
                 <p style="margin: 0 0 5px 0; font-weight: 600; color: #666; font-size: 14px;">Back View:</p>
                 ${backImageInfo}
-                <img src="${backImageData}" alt="Back customization" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;" />
+                <img src="${backDetails.imageData}" alt="Back customization" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;" />
               </div>
             `;
-            
-            // Add as attachment (handle base64 data)
-            if (backImageData.startsWith('data:image')) {
+
+            if (backDetails.imageData.startsWith('data:image')) {
               attachments.push({
                 filename: `${item.name}-back-${index + 1}.png`,
-                content: backImageData.split('base64,')[1],
+                content: backDetails.imageData.split('base64,')[1],
                 encoding: 'base64',
                 cid: `admin-back-${index}@customization`
               });
             } else {
               attachments.push({
                 filename: `${item.name}-back-${index + 1}.png`,
-                path: backImageData,
+                path: backDetails.imageData.startsWith('http')
+                  ? backDetails.imageData
+                  : `${process.env.BACKEND_URL || 'http://localhost:5000'}${backDetails.imageData}`,
                 cid: `admin-back-${index}@customization`
               });
             }
