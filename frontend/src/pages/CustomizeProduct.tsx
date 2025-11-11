@@ -132,7 +132,8 @@ export default function CustomizeProduct() {
       }
     };
     
-    const baseImage = product.images?.[0];
+    // Use first image for front view, second image for back view
+    const baseImage = view === 'front' ? product.images?.[0] : product.images?.[1] || product.images?.[0];
     if (baseImage) {
       productImage.src = toImageUrl(baseImage) || baseImage;
     }
