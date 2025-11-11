@@ -121,7 +121,22 @@ export default function Payment() {
                   quantity: item.quantity,
                   size: item.size,
                   image: item.image,
-                  customization: item.customization
+                  customization: item.customization ? {
+                    frontDesign: item.customization.frontDesign?.imageUrl || null,
+                    backDesign: item.customization.backDesign?.imageUrl || null,
+                    frontDesignPos: item.customization.frontDesign ? {
+                      x: item.customization.frontDesign.x,
+                      y: item.customization.frontDesign.y
+                    } : undefined,
+                    backDesignPos: item.customization.backDesign ? {
+                      x: item.customization.backDesign.x,
+                      y: item.customization.backDesign.y
+                    } : undefined,
+                    frontDesignSize: item.customization.frontDesign?.width || 0,
+                    backDesignSize: item.customization.backDesign?.width || 0,
+                    frontImageUrl: item.customization.frontDesign?.imageUrl || null,
+                    backImageUrl: item.customization.backDesign?.imageUrl || null
+                  } : undefined
                 })),
                 customerInfo: {
                   name: customerInfo.name,
