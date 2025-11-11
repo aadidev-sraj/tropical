@@ -301,8 +301,8 @@ export default function CustomizeProduct() {
         previewUrl = canvasRef.current.toDataURL('image/png');
       }
       
-      // Calculate price (base price + customization fee)
-      const customizationFee = 200;
+      // Testing: customization has no additional fee
+      const customizationFee = 0;
       const price = product.price + customizationFee;
       
       addToCart({

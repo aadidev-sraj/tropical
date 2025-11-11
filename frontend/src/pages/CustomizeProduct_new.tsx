@@ -501,23 +501,15 @@ export default function CustomizeProductV2() {
                   <span>Base Product</span>
                   <span>₹{product.price}</span>
                 </div>
-                {frontDesign && (
+                {(frontDesign || backDesign) && (
                   <div className="flex justify-between text-muted-foreground">
-                    <span>+ Front Design</span>
-                    <span>₹100</span>
-                  </div>
-                )}
-                {backDesign && (
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>+ Back Design</span>
-                    <span>₹100</span>
+                    <span>Customization</span>
+                    <span>₹0</span>
                   </div>
                 )}
                 <div className="flex justify-between font-bold text-lg border-t pt-2">
                   <span>Total</span>
-                  <span>
-                    ₹{product.price + (frontDesign ? 100 : 0) + (backDesign ? 100 : 0)}
-                  </span>
+                  <span>₹{product.price}</span>
                 </div>
               </div>
               <Button

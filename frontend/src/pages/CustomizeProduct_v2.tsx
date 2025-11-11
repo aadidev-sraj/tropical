@@ -229,21 +229,15 @@ export default function CustomizeProductV2() {
       }
       
       // Capture canvas as preview
-      let previewUrl = "";
-      if (canvasRef.current) {
-        previewUrl = canvasRef.current.toDataURL('image/png');
-      }
       
-      // Calculate price
-      let price = product.price;
-      if (frontPhoto || backPhoto) price += 150; // Customer photos
-      if (frontDesign) price += 100; // Front design
-      if (backDesign) price += 100; // Back design
+      // Fetch active designs
+      const designsRes = await apiFetch<{ success: boolean; data: Design[] }>('/designs?isActive=true');
+      setDesigns(designsRes.data || []);
       
-      addToCart({
-        id: parseInt(product._id) || 0,
-        name: `${product.name} (Customized)`,
-        price,
+    } catch (error) {
+      console.error('Fetch error:', error);
+      toast.error("Failed to load product");
+      navigate('/');
         quantity: 1,
         image: previewUrl || toImageUrl(product.images?.[0]) || "",
         size: selectedSize || undefined,
@@ -512,32 +506,15 @@ export default function CustomizeProductV2() {
                   <span>Base Product</span>
                   <span>₹{product.price}</span>
                 </div>
-                {(frontPhoto || backPhoto) && (
+                {hasAnyCustomization && (
                   <div className="flex justify-between text-muted-foreground">
-                    <span>+ Personal Photo{(frontPhoto && backPhoto) ? 's' : ''}</span>
-                    <span>₹150</span>
-                  </div>
-                )}
-                {frontDesign && (
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>+ Front Design</span>
-                    <span>₹100</span>
-                  </div>
-                )}
-                {backDesign && (
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>+ Back Design</span>
-                    <span>₹100</span>
+                    <span>Customization</span>
+                    <span>₹0</span>
                   </div>
                 )}
                 <div className="flex justify-between font-bold text-lg border-t pt-2">
                   <span>Total</span>
-                  <span>
-                    ₹{product.price + 
-                      ((frontPhoto || backPhoto) ? 150 : 0) + 
-                      (frontDesign ? 00 : 0) + 
-                      (backDesign ? 00 : 0)}
-                  </span>
+                  <span>₹{product.price}</span>
                 </div>
               </div>
               <Button
