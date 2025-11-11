@@ -47,12 +47,12 @@ export default function CustomizeProductV2() {
   // Front customization
   const [frontDesign, setFrontDesign] = useState<Design | null>(null);
   const [frontDesignPos, setFrontDesignPos] = useState({ x: 50, y: 50 });
-  const [frontDesignSize, setFrontDesignSize] = useState(200);
+  const [frontDesignSize, setFrontDesignSize] = useState(0);
   
   // Back customization
   const [backDesign, setBackDesign] = useState<Design | null>(null);
   const [backDesignPos, setBackDesignPos] = useState({ x: 50, y: 50 });
-  const [backDesignSize, setBackDesignSize] = useState(200);
+  const [backDesignSize, setBackDesignSize] = useState(0);
   
   // Dragging state
   const [isDragging, setIsDragging] = useState(false);

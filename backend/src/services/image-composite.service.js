@@ -97,24 +97,30 @@ class ImageCompositeService {
     
     // Composite front view if design exists
     if (customization.frontDesign && customization.frontDesignPos) {
+      const frontSize = customization.frontDesignSize && customization.frontDesignSize > 0 
+        ? customization.frontDesignSize 
+        : 200;
       const frontFilename = `composite-front-${productId}-${timestamp}.png`;
       result.frontImageUrl = await this.compositeImage({
         productImageUrl: productImages.front,
         designImageUrl: customization.frontDesignImageUrl,
         position: customization.frontDesignPos,
-        size: customization.frontDesignSize || 200,
+        size: frontSize,
         outputFilename: frontFilename
       });
     }
     
     // Composite back view if design exists
     if (customization.backDesign && customization.backDesignPos) {
+      const backSize = customization.backDesignSize && customization.backDesignSize > 0 
+        ? customization.backDesignSize 
+        : 200;
       const backFilename = `composite-back-${productId}-${timestamp}.png`;
       result.backImageUrl = await this.compositeImage({
         productImageUrl: productImages.back,
         designImageUrl: customization.backDesignImageUrl,
         position: customization.backDesignPos,
-        size: customization.backDesignSize || 200,
+        size: backSize,
         outputFilename: backFilename
       });
     }

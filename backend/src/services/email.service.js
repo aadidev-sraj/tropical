@@ -550,8 +550,8 @@ class EmailService {
         
         if (hasFrontCustomization || hasBackCustomization) {
           customizationImagesHtml += `
-            <div style="margin: 20px 0; padding: 20px; background: white; border-radius: 5px; border: 2px solid #667eea;">
-              <h3 style="color: #667eea; margin: 0 0 15px 0; font-size: 16px; font-weight: 700;">🎨 Customized: ${item.name}</h3>
+            <div style="margin: 20px 0; padding: 20px; background: #f9f9f9; border-radius: 4px; border-left: 4px solid #40513E;">
+              <h3 style="color: #1a1a1a; margin: 0 0 15px 0; font-size: 16px; font-weight: 700;">Customized: ${item.name}</h3>
               <div style="display: flex; gap: 15px; flex-wrap: wrap;">
           `;
           
@@ -648,11 +648,11 @@ class EmailService {
       let addressHtml = '';
       if (customerInfo.address && customerInfo.address.street) {
         addressHtml = `
-          <div style="background: white; padding: 20px; border-radius: 5px; margin: 20px 0;">
-            <h3 style="color: #667eea; margin-top: 0;">Shipping Address</h3>
-            <p style="margin: 5px 0;">${customerInfo.address.street}</p>
-            <p style="margin: 5px 0;">${customerInfo.address.city}${customerInfo.address.state ? `, ${customerInfo.address.state}` : ''} ${customerInfo.address.zipCode || ''}</p>
-            <p style="margin: 5px 0;">${customerInfo.address.country || ''}</p>
+          <div style="background: #f9f9f9; padding: 20px; border-radius: 4px; margin: 0 0 25px 0;">
+            <h2 style="color: #1a1a1a; margin: 0 0 15px 0; font-size: 18px; font-weight: 700;">Shipping Address</h2>
+            <p style="margin: 8px 0; color: #666; font-size: 14px;">${customerInfo.address.street}</p>
+            <p style="margin: 8px 0; color: #666; font-size: 14px;">${customerInfo.address.city}${customerInfo.address.state ? `, ${customerInfo.address.state}` : ''} ${customerInfo.address.zipCode || ''}</p>
+            <p style="margin: 8px 0; color: #666; font-size: 14px;">${customerInfo.address.country || ''}</p>
           </div>
         `;
       }
@@ -662,43 +662,55 @@ class EmailService {
         <html>
         <head>
           <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>New Order Received</title>
         </head>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 700px; margin: 0 auto; padding: 20px;">
-          <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-            <h1 style="color: white; margin: 0;">🔔 NEW ORDER RECEIVED</h1>
-          </div>
+        <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+          <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #f5f5f5;">
+            <tr>
+              <td align="center" style="padding: 40px 20px;">
+                <table role="presentation" style="max-width: 600px; width: 100%; border-collapse: collapse; background-color: #ffffff; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
           
-          <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
-            <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin-bottom: 20px; border-radius: 5px;">
-              <p style="margin: 0; font-weight: bold;">⚡ Please process this order ASAP!</p>
+          <!-- Header -->
+          <tr>
+            <td style="background: #1a1a1a; padding: 40px 30px; text-align: center;">
+              <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -0.5px;">The Tropical</h1>
+              <p style="color: #40513E; margin: 10px 0 0 0; font-size: 14px; letter-spacing: 2px; text-transform: uppercase;">New Order Received</p>
+            </td>
+          </tr>
+          
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px 30px;">
+            <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin-bottom: 25px; border-radius: 4px;">
+              <p style="margin: 0; font-weight: 600; color: #856404;">Please process this order ASAP!</p>
             </div>
             
-            <div style="background: white; padding: 20px; border-radius: 5px; margin: 20px 0;">
-              <h2 style="color: #667eea; margin-top: 0;">Order Information</h2>
-              <p><strong>Order Number:</strong> ${orderNumber}</p>
-              <p><strong>Order Date:</strong> ${new Date().toLocaleString()}</p>
-              <p><strong>Payment Status:</strong> <span style="color: #28a745; font-weight: bold;">PAID</span></p>
+            <div style="background: #f9f9f9; padding: 20px; border-radius: 4px; margin: 0 0 25px 0;">
+              <h2 style="color: #1a1a1a; margin: 0 0 15px 0; font-size: 18px; font-weight: 700;">Order Information</h2>
+              <p style="margin: 8px 0; color: #666; font-size: 14px;"><strong style="color: #1a1a1a;">Order Number:</strong> ${orderNumber}</p>
+              <p style="margin: 8px 0; color: #666; font-size: 14px;"><strong style="color: #1a1a1a;">Order Date:</strong> ${new Date().toLocaleString()}</p>
+              <p style="margin: 8px 0; color: #666; font-size: 14px;"><strong style="color: #1a1a1a;">Payment Status:</strong> <span style="color: #28a745; font-weight: 700;">PAID</span></p>
             </div>
             
-            <div style="background: white; padding: 20px; border-radius: 5px; margin: 20px 0;">
-              <h2 style="color: #667eea; margin-top: 0;">Customer Details</h2>
-              <p><strong>Name:</strong> ${customerInfo.name}</p>
-              <p><strong>Email:</strong> <a href="mailto:${customerInfo.email}">${customerInfo.email}</a></p>
-              <p><strong>Phone:</strong> <a href="tel:${customerInfo.phone}">${customerInfo.phone}</a></p>
+            <div style="background: #f9f9f9; padding: 20px; border-radius: 4px; margin: 0 0 25px 0;">
+              <h2 style="color: #1a1a1a; margin: 0 0 15px 0; font-size: 18px; font-weight: 700;">Customer Details</h2>
+              <p style="margin: 8px 0; color: #666; font-size: 14px;"><strong style="color: #1a1a1a;">Name:</strong> ${customerInfo.name}</p>
+              <p style="margin: 8px 0; color: #666; font-size: 14px;"><strong style="color: #1a1a1a;">Email:</strong> <a href="mailto:${customerInfo.email}" style="color: #40513E; text-decoration: none;">${customerInfo.email}</a></p>
+              <p style="margin: 8px 0; color: #666; font-size: 14px;"><strong style="color: #1a1a1a;">Phone:</strong> <a href="tel:${customerInfo.phone}" style="color: #40513E; text-decoration: none;">${customerInfo.phone}</a></p>
             </div>
             
             ${addressHtml}
             
-            <div style="background: white; padding: 20px; border-radius: 5px; margin: 20px 0;">
-              <h2 style="color: #667eea; margin-top: 0;">Order Items</h2>
+            <div style="margin: 0 0 25px 0;">
+              <h2 style="color: #1a1a1a; margin: 0 0 15px 0; font-size: 18px; font-weight: 700;">Order Items</h2>
               <table style="width: 100%; border-collapse: collapse;">
                 <thead>
-                  <tr style="background: #667eea; color: white;">
-                    <th style="padding: 10px; text-align: left;">Item</th>
-                    <th style="padding: 10px; text-align: center;">Qty</th>
-                    <th style="padding: 10px; text-align: right;">Price</th>
-                    <th style="padding: 10px; text-align: right;">Total</th>
+                  <tr style="background: #1a1a1a;">
+                    <th style="padding: 12px; text-align: left; color: #ffffff; font-size: 14px; font-weight: 600;">Item</th>
+                    <th style="padding: 12px; text-align: center; color: #ffffff; font-size: 14px; font-weight: 600;">Qty</th>
+                    <th style="padding: 12px; text-align: right; color: #ffffff; font-size: 14px; font-weight: 600;">Price</th>
+                    <th style="padding: 12px; text-align: right; color: #ffffff; font-size: 14px; font-weight: 600;">Total</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -707,20 +719,20 @@ class EmailService {
               </table>
             </div>
             
-            <div style="background: white; padding: 20px; border-radius: 5px; margin: 20px 0;">
-              <h2 style="color: #667eea; margin-top: 0;">Payment Summary</h2>
+            <div style="background: #f9f9f9; padding: 20px; border-radius: 4px; margin: 0 0 25px 0;">
+              <h2 style="color: #1a1a1a; margin: 0 0 15px 0; font-size: 18px; font-weight: 700;">Payment Summary</h2>
               <table style="width: 100%;">
                 <tr>
-                  <td style="padding: 5px;">Subtotal:</td>
-                  <td style="padding: 5px; text-align: right;">₹${pricing.subtotal.toFixed(2)}</td>
+                  <td style="padding: 8px 0; color: #666;">Subtotal:</td>
+                  <td style="padding: 8px 0; text-align: right; color: #1a1a1a; font-weight: 500;">₹${pricing.subtotal.toFixed(2)}</td>
                 </tr>
                 <tr>
-                  <td style="padding: 5px;">Shipping:</td>
-                  <td style="padding: 5px; text-align: right;">₹${pricing.shipping.toFixed(2)}</td>
+                  <td style="padding: 8px 0; color: #666;">Shipping:</td>
+                  <td style="padding: 8px 0; text-align: right; color: #1a1a1a; font-weight: 500;">₹${pricing.shipping.toFixed(2)}</td>
                 </tr>
-                <tr style="border-top: 2px solid #1a1a1a; font-weight: bold; font-size: 18px;">
-                  <td style="padding: 10px 5px;">Total:</td>
-                  <td style="padding: 10px 5px; text-align: right; color: #40513E;">₹${pricing.total.toFixed(2)}</td>
+                <tr style="border-top: 2px solid #1a1a1a;">
+                  <td style="padding: 15px 0 0 0; font-weight: 700; font-size: 20px; color: #1a1a1a;">Total:</td>
+                  <td style="padding: 15px 0 0 0; text-align: right; font-weight: 700; font-size: 20px; color: #40513E;">₹${pricing.total.toFixed(2)}</td>
                 </tr>
               </table>
             </div>
@@ -728,11 +740,25 @@ class EmailService {
             <!-- Customization Images -->
             ${customizationImagesHtml}
             
-            <div style="text-align: center; margin-top: 30px; padding: 20px; background: white; border-radius: 5px;">
-              <p style="color: #666; margin: 0;">💰 Payment has been confirmed</p>
-              <p style="color: #999; font-size: 12px; margin: 10px 0 0 0;">This is an automated notification</p>
+            <div style="text-align: center; padding: 30px 0 0 0; border-top: 1px solid #e5e5e5;">
+              <p style="color: #1a1a1a; font-size: 16px; margin: 0 0 10px 0; font-weight: 600;">Payment Confirmed</p>
+              <p style="color: #999; font-size: 13px; margin: 0;">This is an automated notification. Please process this order promptly.</p>
             </div>
-          </div>
+            
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="background: #1a1a1a; padding: 30px; text-align: center;">
+              <p style="color: #999; font-size: 12px; margin: 0;">© ${new Date().getFullYear()} The Tropical. All rights reserved.</p>
+            </td>
+          </tr>
+          
+                </table>
+              </td>
+            </tr>
+          </table>
         </body>
         </html>
       `;
