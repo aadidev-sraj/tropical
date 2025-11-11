@@ -20,7 +20,14 @@ exports.list = async (req, res, next) => {
       filter.category = String(category).toLowerCase();
     }
     const products = await Product.find(filter).sort({ createdAt: -1 }).lean();
-    res.json({ data: products });
+
+    // Testing override: force all prices to ₹0
+    const transformed = products.map(product => ({
+      ...product,
+      price: 0
+    }));
+
+    res.json({ data: transformed });
   } catch (err) {
     next(err);
   }
@@ -43,7 +50,14 @@ exports.getOne = async (req, res, next) => {
     }
     
     if (!product) return res.status(404).json({ message: 'Not found' });
-    res.json({ data: product });
+
+    // Testing override: force price to ₹0
+    const transformedProduct = {
+      ...product,
+      price: 0
+    };
+
+    res.json({ data: transformedProduct });
   } catch (err) {
     next(err);
   }
