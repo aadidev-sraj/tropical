@@ -1,73 +1,110 @@
-# Welcome to your Lovable project
+# The Tropical - E-Commerce Platform
 
-## Project info
+## About
 
-**URL**: https://lovable.dev/projects/84e37739-acf5-4c3c-82c1-1bbe6e2aef85
+The Tropical is a modern e-commerce platform for custom t-shirts and premium apparel. Customers can design their own clothing with our easy-to-use customization tools.
 
-## How can I edit this code?
+**Website**: https://www.thetropical.in
 
-There are several ways of editing your application.
+## Features
 
-**Use Lovable**
+- 🎨 **Custom Product Design** - Upload your own designs or choose from admin-approved templates
+- 🛒 **Shopping Cart** - Full-featured cart with size selection and quantity management
+- 💳 **Secure Payments** - Integrated with Razorpay for safe transactions
+- 📧 **Email Notifications** - Automated order confirmations via Resend
+- 📱 **Responsive Design** - Works seamlessly on all devices
+- 🔍 **SEO Optimized** - Structured data and meta tags for better search visibility
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/84e37739-acf5-4c3c-82c1-1bbe6e2aef85) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
+## Tech Stack
 
 This project is built with:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- **Frontend**: React + TypeScript + Vite
+- **Styling**: Tailwind CSS + shadcn-ui
+- **Backend**: Node.js + Express
+- **Database**: MongoDB
+- **Payment**: Razorpay
+- **Email**: Resend API
+- **Image Processing**: Sharp
 
-## How can I deploy this project?
+## Development Setup
 
-Simply open [Lovable](https://lovable.dev/projects/84e37739-acf5-4c3c-82c1-1bbe6e2aef85) and click on Share -> Publish.
+### Prerequisites
 
-## Can I connect a custom domain to my Lovable project?
+- Node.js (v18 or higher) - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- MongoDB (local or Atlas)
+- npm or yarn
 
-Yes, you can!
+### Installation
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+```sh
+# Clone the repository
+git clone <YOUR_GIT_URL>
+cd tropical
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+# Install frontend dependencies
+cd frontend
+npm install
+
+# Install backend dependencies
+cd ../backend
+npm install
+```
+
+### Environment Variables
+
+Create `.env` files in both frontend and backend directories:
+
+**Backend `.env`:**
+```
+MONGODB_URI=mongodb://localhost:27017/tropical
+JWT_SECRET=your-secret-key
+RAZORPAY_KEY_ID=your-razorpay-key
+RAZORPAY_KEY_SECRET=your-razorpay-secret
+RESEND_API_KEY=your-resend-api-key
+RESEND_FROM_EMAIL=noreply@thetropical.in
+ADMIN_EMAIL=admin@thetropical.in
+```
+
+**Frontend `.env`:**
+```
+VITE_API_URL=http://localhost:5000/api
+```
+
+### Running the Application
+
+```sh
+# Start backend (from backend directory)
+npm run dev
+
+# Start frontend (from frontend directory)
+npm run dev
+```
+
+The frontend will be available at `http://localhost:5173`
+The backend API will be available at `http://localhost:5000`
+
+## Deployment
+
+### Frontend
+Deploy to Netlify, Vercel, or any static hosting service:
+```sh
+npm run build
+```
+
+### Backend
+Deploy to Render, Railway, or any Node.js hosting service.
+
+## SEO Features
+
+- ✅ Comprehensive meta tags (title, description, keywords)
+- ✅ Open Graph tags for social media sharing
+- ✅ Twitter Card support
+- ✅ Structured data (JSON-LD) for products and organization
+- ✅ Sitemap.xml for search engines
+- ✅ Robots.txt for crawler configuration
+- ✅ Canonical URLs to prevent duplicate content
+
+## License
+
+All rights reserved © The Tropical

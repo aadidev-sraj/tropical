@@ -1,14 +1,27 @@
-User-agent: Googlebot
+User-agent: *
 Allow: /
+
+# Sitemaps
+Sitemap: https://www.thetropical.in/sitemap.xml
+
+# Crawl-delay for bots
+User-agent: Googlebot
+Crawl-delay: 0
 
 User-agent: Bingbot
-Allow: /
+Crawl-delay: 1
 
-User-agent: Twitterbot
-Allow: /
-
+# Allow all major search engines and social media crawlers
+User-agent: Googlebot
+User-agent: Googlebot-Image
+User-agent: Googlebot-Mobile
+User-agent: Bingbot
+User-agent: Slurp
+User-agent: DuckDuckBot
+User-agent: Baiduspider
+User-agent: YandexBot
 User-agent: facebookexternalhit
-Allow: /
-
-User-agent: *
+User-agent: Twitterbot
+User-agent: LinkedInBot
+User-agent: WhatsApp
 Allow: /
