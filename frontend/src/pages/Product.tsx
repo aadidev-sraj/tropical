@@ -5,6 +5,7 @@ import { getProduct, firstImageUrl, type BackendProduct } from "@/lib/products";
 import { addToCart } from "@/lib/cart";
 import { toImageUrl } from "@/lib/api";
 import Navbar from "@/components/Navbar";
+import SEO from "@/components/SEO";
 import { toast } from "sonner";
 
 function formatPrice(p: number) {
@@ -60,6 +61,22 @@ export default function Product() {
 
   return (
     <div className="min-h-screen">
+      {product && (
+        <SEO
+          title={product.name}
+          description={product.description ? String(product.description).slice(0, 160) : `Buy ${product.name} from The Tropical. Premium quality, fast shipping across India.`}
+          image={firstImageUrl(product as any) || undefined}
+          url={`https://www.thetropical.in/products/${slug}`}
+          type="product"
+          productData={{
+            name: product.name,
+            price: product.price,
+            currency: "INR",
+            availability: "https://schema.org/InStock",
+            image: firstImageUrl(product as any) || undefined,
+          }}
+        />
+      )}
       <Navbar />
       <main className="max-w-6xl mx-auto px-4 py-8">
         <div className="mb-4">

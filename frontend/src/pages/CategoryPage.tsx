@@ -6,6 +6,7 @@ import { ShoppingCart } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import ProductSubNav from "@/components/ProductSubNav";
 import { apiFetch, toImageUrl } from "@/lib/api";
+import SEO from "@/components/SEO";
 
 type BackendProduct = {
   _id: string;
@@ -57,6 +58,11 @@ const CategoryPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title={`${title} Collection`}
+        description={`Shop premium ${title.toLowerCase()} at The Tropical. Quality fashion, fast shipping across India.`}
+        url={`https://www.thetropical.in/products/${category}`}
+      />
       <Navbar />
       <ProductSubNav />
       

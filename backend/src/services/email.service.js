@@ -200,6 +200,23 @@ class EmailService {
     }
   }
 
+  /**
+   * Convert nodemailer-style attachments to Resend SDK format.
+   * Nodemailer uses { content: base64String, encoding: 'base64' } or { path: url }.
+   * Resend uses  { content: Buffer }                             or { path: url }.
+   */
+  _convertAttachmentsForResend(attachments) {
+    return attachments.map(att => {
+      const resendAtt = { filename: att.filename };
+      if (att.content && att.encoding === 'base64') {
+        resendAtt.content = Buffer.from(att.content, 'base64');
+      } else if (att.path) {
+        resendAtt.path = att.path;
+      }
+      return resendAtt;
+    });
+  }
+
   async sendWelcomeEmail(userData) {
     if (!this.transporter && !this.resend) {
       console.log('❌ Email service not configured. Skipping welcome email.');
@@ -537,12 +554,16 @@ class EmailService {
       // Use Resend if available (HTTP API - more reliable)
       if (this.useResend && this.resend) {
         const fromEmail = process.env.RESEND_FROM_EMAIL || process.env.SMTP_EMAIL || 'onboarding@resend.dev';
-        const { data, error } = await this.resend.emails.send({
+        const resendPayload = {
           from: `The Tropical <${fromEmail}>`,
           to: [customerInfo.email],
           subject: `Order Confirmation - ${orderNumber}`,
           html: htmlContent
-        });
+        };
+        if (attachments.length > 0) {
+          resendPayload.attachments = this._convertAttachmentsForResend(attachments);
+        }
+        const { data, error } = await this.resend.emails.send(resendPayload);
 
         if (error) {
           console.error('❌ Resend failed to send order confirmation:', error.message || error);
@@ -848,12 +869,16 @@ class EmailService {
       // Use Resend if available (HTTP API - more reliable)
       if (this.useResend && this.resend) {
         const fromEmail = process.env.RESEND_FROM_EMAIL || process.env.SMTP_EMAIL || 'onboarding@resend.dev';
-        const { data, error } = await this.resend.emails.send({
+        const resendPayload = {
           from: `The Tropical <${fromEmail}>`,
           to: [adminEmail],
           subject: `New Order #${orderNumber} - ${customerInfo.name}`,
           html: htmlContent
-        });
+        };
+        if (attachments.length > 0) {
+          resendPayload.attachments = this._convertAttachmentsForResend(attachments);
+        }
+        const { data, error } = await this.resend.emails.send(resendPayload);
 
         if (error) {
           console.error('❌ Resend failed to send admin notification:', error.message || error);

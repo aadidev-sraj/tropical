@@ -5,10 +5,12 @@ import ProductsGrid from "@/components/ProductsGrid";
 import ProductSubNav from "@/components/ProductSubNav";
 import AboutSection from "@/components/AboutSection";
 import ContactSection from "@/components/ContactSection";
+import SEO from "@/components/SEO";
 
 const Index = () => {
   return (
     <div className="min-h-screen">
+      <SEO />
       <Navbar />
       <main>
         <Hero />

@@ -1,4 +1,4 @@
-import { getCart, removeFromCart, setQty } from "@/lib/cart";
+
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import { getFeeSettings, type FeeSettings } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Minus, Plus, Trash2, ArrowLeft } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import SEO from "@/components/SEO";
 import { CartItem, getCart, updateQuantity as setQty, removeFromCart } from "@/lib/cart";
 
 const Cart = () => {
@@ -72,6 +73,11 @@ const Cart = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Shopping Cart"
+        description="Review your shopping cart at The Tropical. Premium custom t-shirts and apparel."
+        url="https://www.thetropical.in/cart"
+      />
       <Navbar />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-24">
         <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-8">

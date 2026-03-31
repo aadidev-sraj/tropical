@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
+import SEO from "@/components/SEO";
 import { apiFetch, toImageUrl } from "@/lib/api";
 import { BackendProduct } from "@/lib/products";
 
@@ -30,6 +31,11 @@ export default function CustomizableProducts() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Customizable Products"
+        description="Design your own custom t-shirts and apparel at The Tropical. Upload your photos, add your designs, and create unique clothing. Fast shipping across India."
+        url="https://www.thetropical.in/customize"
+      />
       <Navbar />
       
       <div className="max-w-7xl mx-auto px-4 py-8 pt-24">
