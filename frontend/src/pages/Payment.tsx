@@ -2,7 +2,7 @@ import Navbar from "@/components/Navbar";
 import { getCart, clearCart } from "@/lib/cart";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, getFeeSettings, type FeeSettings } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -29,6 +29,9 @@ export default function Payment() {
       zipCode: ""
     }
   });
+  const [feeSettings, setFeeSettings] = useState<FeeSettings>({ shippingFee: 0, customizationFee: 0 });
+  const [isLoadingFees, setIsLoadingFees] = useState(true);
+  const [feeError, setFeeError] = useState<string | null>(null);
 
   useEffect(() => {
     const handler = () => setItems(getCart());
@@ -36,8 +39,34 @@ export default function Payment() {
     return () => window.removeEventListener("cart:updated", handler as any);
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+    const loadFees = async () => {
+      try {
+        const settings = await getFeeSettings();
+        if (isMounted) {
+          setFeeSettings(settings);
+          setFeeError(null);
+        }
+      } catch (error: any) {
+        if (isMounted) {
+          console.error("Failed to load fee settings", error);
+          setFeeError("Unable to load latest fee settings. Using defaults.");
+          setFeeSettings({ shippingFee: 0, customizationFee: 0 });
+        }
+      } finally {
+        if (isMounted) setIsLoadingFees(false);
+      }
+    };
+
+    loadFees();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const subtotal = useMemo(() => items.reduce((sum, it) => sum + it.price * it.quantity, 0), [items]);
-  const shipping = items.length > 0 ? 1 : 0;
+  const shipping = items.length > 0 ? feeSettings.shippingFee : 0;
   const total = subtotal + shipping;
 
   const handlePlaceOrder = async () => {

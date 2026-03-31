@@ -4,6 +4,26 @@ export function getToken(): string | null {
   return localStorage.getItem('token');
 }
 
+export type FeeSettings = {
+  shippingFee: number;
+  customizationFee: number;
+};
+
+let cachedSettings: FeeSettings | null = null;
+
+export async function getFeeSettings(forceRefresh = false): Promise<FeeSettings> {
+  if (cachedSettings && !forceRefresh) {
+    return cachedSettings;
+  }
+
+  const response = await apiFetch<{ success: boolean; data: FeeSettings }>('/settings');
+  cachedSettings = {
+    shippingFee: response.data?.shippingFee ?? 0,
+    customizationFee: response.data?.customizationFee ?? 0,
+  };
+  return cachedSettings;
+}
+
 export function setToken(token: string) {
   localStorage.setItem('token', token);
 }

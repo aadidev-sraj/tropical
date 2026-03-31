@@ -1,6 +1,8 @@
+import { getCart, removeFromCart, setQty } from "@/lib/cart";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { getFeeSettings, type FeeSettings } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Minus, Plus, Trash2, ArrowLeft } from "lucide-react";
 import Navbar from "@/components/Navbar";
@@ -8,9 +10,38 @@ import { CartItem, getCart, updateQuantity as setQty, removeFromCart } from "@/l
 
 const Cart = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [feeSettings, setFeeSettings] = useState<FeeSettings>({ shippingFee: 0, customizationFee: 0 });
+  const [isLoadingFees, setIsLoadingFees] = useState(true);
+  const [feeError, setFeeError] = useState<string | null>(null);
 
   useEffect(() => {
     setCartItems(getCart());
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadFees = async () => {
+      try {
+        const settings = await getFeeSettings();
+        if (isMounted) {
+          setFeeSettings(settings);
+          setFeeError(null);
+        }
+      } catch (error) {
+        if (isMounted) {
+          console.error("Failed to load fee settings", error);
+          setFeeError("Unable to load latest fees. Using defaults.");
+          setFeeSettings({ shippingFee: 0, customizationFee: 0 });
+        }
+      } finally {
+        if (isMounted) setIsLoadingFees(false);
+      }
+    };
+
+    loadFees();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const updateQuantity = (id: number, change: number) => {
@@ -36,7 +67,7 @@ const Cart = () => {
     (sum, item) => sum + item.price * item.quantity,
     0
   );
-  const shipping = cartItems.length > 0 ? 1 : 0;
+  const shipping = cartItems.length > 0 ? feeSettings.shippingFee : 0;
   const total = subtotal + shipping;
 
   return (

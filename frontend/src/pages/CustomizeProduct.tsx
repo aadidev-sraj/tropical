@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import Navbar from "@/components/Navbar";
 import { toast } from "sonner";
 import { addToCart } from "@/lib/cart";
-import { apiFetch, toImageUrl, getToken } from "@/lib/api";
+import { apiFetch, toImageUrl, getToken, getFeeSettings, type FeeSettings } from "@/lib/api";
 import { Upload, X, Move } from "lucide-react";
 
 type Product = {
@@ -55,6 +55,9 @@ export default function CustomizeProduct() {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   
   const [isProcessing, setIsProcessing] = useState(false);
+  const [feeSettings, setFeeSettings] = useState<FeeSettings>({ shippingFee: 0, customizationFee: 0 });
+  const [isLoadingFees, setIsLoadingFees] = useState(true);
+  const [feeError, setFeeError] = useState<string | null>(null);
 
   // Fetch product
   useEffect(() => {
@@ -84,6 +87,32 @@ export default function CustomizeProduct() {
     
     if (slug) fetchData();
   }, [slug, navigate]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadFees = async () => {
+      try {
+        const settings = await getFeeSettings();
+        if (isMounted) {
+          setFeeSettings(settings);
+          setFeeError(null);
+        }
+      } catch (error) {
+        if (isMounted) {
+          console.error('Failed to load fee settings', error);
+          setFeeError('Unable to load customization fees. Using defaults.');
+          setFeeSettings({ shippingFee: 0, customizationFee: 0 });
+        }
+      } finally {
+        if (isMounted) setIsLoadingFees(false);
+      }
+    };
+
+    loadFees();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Render preview on canvas
   useEffect(() => {
@@ -301,8 +330,7 @@ export default function CustomizeProduct() {
         previewUrl = canvasRef.current.toDataURL('image/png');
       }
       
-      // Testing: customization has no additional fee
-      const customizationFee = 0;
+      const customizationFee = hasAnyCustomization ? feeSettings.customizationFee : 0;
       const price = product.price + customizationFee;
       
       addToCart({
@@ -564,26 +592,36 @@ export default function CustomizeProduct() {
               <div className="space-y-2 text-sm mb-4">
                 <div className="flex justify-between">
                   <span>Base Product</span>
-                  <span>₹{product.price}</span>
+                  <span>₹{product.price.toFixed(2)}</span>
                 </div>
                 {hasAnyCustomization && (
                   <div className="flex justify-between text-muted-foreground">
-                    <span>+ Custom Design</span>
-                    <span>₹200</span>
+                    <span>+ Custom Design Fee</span>
+                    <span>₹{feeSettings.customizationFee.toFixed(2)}</span>
                   </div>
                 )}
                 <div className="flex justify-between font-bold text-lg border-t pt-2">
                   <span>Total</span>
-                  <span>₹{product.price + (hasAnyCustomization ? 0 : 0)}</span>
+                  <span>
+                    ₹{(product.price + (hasAnyCustomization ? feeSettings.customizationFee : 0)).toFixed(2)}
+                  </span>
                 </div>
               </div>
+              {feeError && (
+                <p className="text-xs text-amber-600 mb-2">{feeError}</p>
+              )}
               <Button
                 className="w-full"
                 size="lg"
                 onClick={handleAddToCart}
-                disabled={isProcessing || !hasAnyCustomization || (product.sizes && product.sizes.length > 0 && !selectedSize)}
+                disabled={
+                  isProcessing ||
+                  isLoadingFees ||
+                  !hasAnyCustomization ||
+                  (product.sizes && product.sizes.length > 0 && !selectedSize)
+                }
               >
-                {isProcessing ? "Processing..." : "Add to Cart"}
+                {isProcessing ? "Processing..." : isLoadingFees ? "Loading fees..." : "Add to Cart"}
               </Button>
               {!hasAnyCustomization && (
                 <p className="text-xs text-muted-foreground mt-2 text-center">
