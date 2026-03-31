@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
  
 import { Button } from "./ui/button";
 import heroImage from "@/assets/hero-fashion.jpg";
@@ -12,33 +12,84 @@ type HeroData = {
   backgroundImage?: string;
 };
 
+const HERO_CACHE_KEY = "tropical_hero_cache";
+const HERO_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Read hero data from localStorage cache if it exists and hasn't expired.
+ * This allows the hero to render instantly on repeat visits without
+ * waiting for the API.
+ */
+function getCachedHero(): HeroData | null {
+  try {
+    const raw = localStorage.getItem(HERO_CACHE_KEY);
+    if (!raw) return null;
+    const { data, timestamp } = JSON.parse(raw);
+    if (Date.now() - timestamp > HERO_CACHE_TTL) {
+      localStorage.removeItem(HERO_CACHE_KEY);
+      return null;
+    }
+    return data as HeroData;
+  } catch {
+    return null;
+  }
+}
+
+function setCachedHero(data: HeroData) {
+  try {
+    localStorage.setItem(
+      HERO_CACHE_KEY,
+      JSON.stringify({ data, timestamp: Date.now() })
+    );
+  } catch {
+    // localStorage might be full or disabled — ignore
+  }
+}
+
+const DEFAULT_HERO: HeroData = {
+  title: "NEW COLLECTION",
+  subtitle: "Discover the latest trends in modern fashion",
+  buttonText: "Shop Now",
+  buttonLink: "/products",
+};
+
 const Hero = () => {
-  const [heroData, setHeroData] = useState<HeroData>({
-    title: "NEW COLLECTION",
-    subtitle: "Discover the latest trends in modern fashion",
-    buttonText: "Shop Now",
-    buttonLink: "/products",
+  // Initialize from cache so the hero shows instantly on repeat visits
+  const cached = useRef(getCachedHero());
+  const [heroData, setHeroData] = useState<HeroData>(cached.current || DEFAULT_HERO);
+  const [backgroundImage, setBackgroundImage] = useState(() => {
+    // If cached hero has a background image, use it immediately
+    if (cached.current?.backgroundImage) {
+      return toImageUrl(cached.current.backgroundImage) || heroImage;
+    }
+    return heroImage;
   });
-  const [backgroundImage, setBackgroundImage] = useState(heroImage);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   useEffect(() => {
-    // Fetch hero data from API
+    // Always fetch fresh data in the background (stale-while-revalidate pattern)
     apiFetch<{ data: HeroData }>("/hero")
       .then((response) => {
-        console.log("Hero API response:", response);
         if (response?.data) {
           setHeroData(response.data);
+          setCachedHero(response.data);
+
           if (response.data.backgroundImage) {
             const imageUrl = toImageUrl(response.data.backgroundImage);
-            console.log("Hero background image - Original:", response.data.backgroundImage);
-            console.log("Hero background image - Converted:", imageUrl);
-            setBackgroundImage(imageUrl || response.data.backgroundImage);
+            const finalUrl = imageUrl || response.data.backgroundImage;
+
+            // Preload the image before swapping to avoid flash
+            const img = new Image();
+            img.onload = () => {
+              setBackgroundImage(finalUrl);
+            };
+            img.src = finalUrl;
           }
         }
       })
       .catch((error) => {
         console.error("Error fetching hero data:", error);
-        // Use default values on error
+        // Cache or defaults are already showing — no action needed
       });
   }, []);
 
@@ -49,10 +100,11 @@ const Hero = () => {
         <img
           src={backgroundImage}
           alt={heroData.title}
-          className="w-full h-full object-cover"
-          onLoad={() => console.log("Hero image loaded successfully:", backgroundImage)}
+          className={`w-full h-full object-cover transition-opacity duration-500 ${
+            imageLoaded ? "opacity-100" : "opacity-0"
+          }`}
+          onLoad={() => setImageLoaded(true)}
           onError={(e) => {
-            console.error("Hero image failed to load:", backgroundImage);
             // Fallback to bundled hero image if remote fails
             if (e.currentTarget.src !== heroImage) {
               e.currentTarget.src = heroImage;
