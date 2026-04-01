@@ -82,15 +82,36 @@ app.use(morgan('dev'));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Connect to MongoDB
-mongoose
-  .connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/tropical', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => {
-    console.log('Connected to MongoDB');
-  })
-  .catch((err) => console.error('MongoDB connection error:', err));
+let isConnected = false;
+
+const connectDB = async () => {
+  if (isConnected) return;
+
+  try {
+    // Await the connection explicitly
+    const db = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/tropical', {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 10000, 
+    });
+    
+    isConnected = db.connections[0].readyState === 1;
+    console.log('Connected to MongoDB in Serverless context');
+  } catch (err) {
+    console.error('MongoDB connection error:', err);
+    throw err;
+  }
+};
+
+// Global middleware to await DB connection before running any API routes
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    res.status(500).json({ message: 'Database connecting timed out', error: err.message });
+  }
+});
 
 // Routes
 app.use('/api/auth', authRoutes);
