@@ -21,13 +21,7 @@ exports.list = async (req, res, next) => {
     }
     const products = await Product.find(filter).sort({ createdAt: -1 }).lean();
 
-    // Testing override: force all prices to ₹0
-    const transformed = products.map(product => ({
-      ...product,
-      price: 0
-    }));
-
-    res.json({ data: transformed });
+    res.json({ data: products });
   } catch (err) {
     next(err);
   }
@@ -51,13 +45,7 @@ exports.getOne = async (req, res, next) => {
     
     if (!product) return res.status(404).json({ message: 'Not found' });
 
-    // Testing override: force price to ₹0
-    const transformedProduct = {
-      ...product,
-      price: 0
-    };
-
-    res.json({ data: transformedProduct });
+    res.json({ data: product });
   } catch (err) {
     next(err);
   }
