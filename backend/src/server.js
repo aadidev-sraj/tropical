@@ -71,6 +71,13 @@ const corsOptions = {
   optionsSuccessStatus: 200,
 };
 
+// Ensure Edge Caches don't mix up CORS headers between CMS and Frontend requests
+app.use((req, res, next) => {
+  res.setHeader('Vary', 'Origin');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  next();
+});
+
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 // Increase payload size limit for customization images (canvas screenshots can be large)
