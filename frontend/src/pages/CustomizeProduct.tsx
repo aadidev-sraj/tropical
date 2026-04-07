@@ -35,65 +35,62 @@ export default function CustomizeProduct() {
   const navigate = useNavigate();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
-  
-  // Data state
+
+  // ── Data ─────────────────────────────────────────────────────────────────
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
-  
-  // Customization state
-  const [view, setView] = useState<'front' | 'back'>('front');
-  // Keep a ref in sync with view so the non-reactive touchmove handler
-  // can always see the current value without stale closures.
-  const viewRef = useRef<'front' | 'back'>('front');
-  const [selectedSize, setSelectedSize] = useState<string>('');
-  
-  // Front customization
+
+  // ── Customization state ───────────────────────────────────────────────────
+  const [view, setView] = useState<"front" | "back">("front");
+  // Mirror in a ref so the non-passive touchmove listener never sees stale state
+  const viewRef = useRef<"front" | "back">("front");
+  const [selectedSize, setSelectedSize] = useState<string>("");
+
   const [frontDesign, setFrontDesign] = useState<CustomDesign | null>(null);
-  
-  // Back customization
   const [backDesign, setBackDesign] = useState<CustomDesign | null>(null);
-  
-  // Dragging state
-  // Using a ref (not state) for dragStart so the non-passive touch
-  // listener can always read the latest value without stale closures.
+
+  // ── Aspect-ratio lock ─────────────────────────────────────────────────────
+  const [lockAspectRatio, setLockAspectRatio] = useState(true);
+
+  // ── Drag state (refs to avoid stale closures in addEventListener) ─────────
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef({ x: 0, y: 0 });
   const isDraggingRef = useRef(false);
-  
+
+  // ── Fees ──────────────────────────────────────────────────────────────────
   const [isProcessing, setIsProcessing] = useState(false);
-  const [feeSettings, setFeeSettings] = useState<FeeSettings>({ shippingFee: 0, customizationFee: 0 });
+  const [feeSettings, setFeeSettings] = useState<FeeSettings>({
+    shippingFee: 0,
+    shippingFeeType: "fixed",
+    customizationFee: 0,
+  });
   const [isLoadingFees, setIsLoadingFees] = useState(true);
   const [feeError, setFeeError] = useState<string | null>(null);
 
-  // Fetch product
+  // ── Fetch product ─────────────────────────────────────────────────────────
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        
         const productRes = await apiFetch<{ data: Product }>(`/products/${slug}`);
         const fetchedProduct = productRes.data;
-        
         if (!fetchedProduct.customizable) {
           toast.error("This product is not available for customization");
           navigate(`/products/${slug}`);
           return;
         }
-        
         setProduct(fetchedProduct);
-        
-      } catch (error) {
-        console.error('Fetch error:', error);
+      } catch {
         toast.error("Failed to load product");
-        navigate('/');
+        navigate("/");
       } finally {
         setLoading(false);
       }
     };
-    
     if (slug) fetchData();
   }, [slug, navigate]);
 
+  // ── Fetch fees ────────────────────────────────────────────────────────────
   useEffect(() => {
     let isMounted = true;
     const loadFees = async () => {
@@ -103,121 +100,95 @@ export default function CustomizeProduct() {
           setFeeSettings(settings);
           setFeeError(null);
         }
-      } catch (error) {
+      } catch {
         if (isMounted) {
-          console.error('Failed to load fee settings', error);
-          setFeeError('Unable to load customization fees. Using defaults.');
-          setFeeSettings({ shippingFee: 0, customizationFee: 0 });
+          setFeeError("Unable to load customization fees. Using defaults.");
+          setFeeSettings({ shippingFee: 0, shippingFeeType: "fixed", customizationFee: 0 });
         }
       } finally {
         if (isMounted) setIsLoadingFees(false);
       }
     };
-
     loadFees();
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, []);
 
-  // Render preview on canvas
+  // ── Render canvas ─────────────────────────────────────────────────────────
   useEffect(() => {
     if (!product || !canvasRef.current) return;
-    
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    
-    // Clear canvas
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Draw product base image
+
     const productImage = new Image();
     productImage.crossOrigin = "anonymous";
     productImage.onload = () => {
       ctx.drawImage(productImage, 0, 0, canvas.width, canvas.height);
-      
-      // Get current view design
-      const currentDesign = view === 'front' ? frontDesign : backDesign;
-      
-      // Draw customer design if exists
+
+      const currentDesign = view === "front" ? frontDesign : backDesign;
       if (currentDesign) {
         const designImage = new Image();
         designImage.crossOrigin = "anonymous";
         designImage.onload = () => {
           ctx.save();
-          
-          // Calculate position and size
           const x = (currentDesign.x / 100) * canvas.width;
           const y = (currentDesign.y / 100) * canvas.height;
-          const width = (currentDesign.width / 100) * canvas.width;
-          const height = (currentDesign.height / 100) * canvas.height;
-          
-          // Apply rotation
-          ctx.translate(x + width / 2, y + height / 2);
+          const w = (currentDesign.width / 100) * canvas.width;
+          const h = (currentDesign.height / 100) * canvas.height;
+          ctx.translate(x + w / 2, y + h / 2);
           ctx.rotate((currentDesign.rotation * Math.PI) / 180);
-          ctx.translate(-(x + width / 2), -(y + height / 2));
-          
-          // Draw design
-          ctx.drawImage(designImage, x, y, width, height);
-          
+          ctx.translate(-(x + w / 2), -(y + h / 2));
+          ctx.drawImage(designImage, x, y, w, h);
           ctx.restore();
         };
         designImage.src = currentDesign.imageUrl;
       }
     };
-    
-    // Use first image for front view, second image for back view
-    const baseImage = view === 'front' ? product.images?.[0] : product.images?.[1] || product.images?.[0];
-    if (baseImage) {
-      productImage.src = toImageUrl(baseImage) || baseImage;
-    }
+
+    const baseImage =
+      view === "front"
+        ? product.images?.[0]
+        : product.images?.[1] || product.images?.[0];
+    if (baseImage) productImage.src = toImageUrl(baseImage) || baseImage;
   }, [product, view, frontDesign, backDesign]);
 
-  // Handle design upload
+  // ── Upload handler ────────────────────────────────────────────────────────
   const handleDesignUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please upload an image file");
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image size should be less than 5MB");
-      return;
-    }
+    if (!file.type.startsWith("image/")) { toast.error("Please upload an image file"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Image size should be less than 5MB"); return; }
 
     const reader = new FileReader();
     reader.onload = (event) => {
       const imageUrl = event.target?.result as string;
-      const newDesign: CustomDesign = {
-        imageUrl,
-        x: 25, // Start at 25% from left
-        y: 25, // Start at 25% from top
-        width: 50, // 50% of canvas width
-        height: 50, // 50% of canvas height
-        rotation: 0,
+
+      // Detect natural aspect ratio so the lock works from the start
+      const img = new Image();
+      img.onload = () => {
+        const aspectRatio = img.naturalWidth / img.naturalHeight;
+        const startWidth = 40;
+        const startHeight = startWidth / aspectRatio;
+        const newDesign: CustomDesign = {
+          imageUrl,
+          x: 30,
+          y: 20,
+          width: startWidth,
+          height: Math.max(5, Math.min(100, startHeight)),
+          rotation: 0,
+        };
+        if (view === "front") setFrontDesign(newDesign);
+        else setBackDesign(newDesign);
+        toast.success(`Design uploaded for ${view} side! Drag or resize it below.`);
       };
-      
-      if (view === 'front') {
-        setFrontDesign(newDesign);
-      } else {
-        setBackDesign(newDesign);
-      }
-      toast.success(`Design uploaded for ${view} side! Drag to position it.`);
+      img.src = imageUrl;
     };
     reader.readAsDataURL(file);
   };
 
-  // ─── Shared drag utilities ───────────────────────────────────────────────
-
-  /**
-   * Convert a raw clientX/clientY into a percentage position relative to
-   * the canvas element. This is the single source of truth for both mouse
-   * and touch coordinate normalisation.
-   */
+  // ── Shared drag utilities ─────────────────────────────────────────────────
   const getCanvasPercent = (clientX: number, clientY: number) => {
     if (!canvasRef.current) return null;
     const rect = canvasRef.current.getBoundingClientRect();
@@ -227,49 +198,31 @@ export default function CustomizeProduct() {
     };
   };
 
-  /**
-   * Core move logic — called by both mouse move and touch move handlers.
-   * Reads from refs so it is safe to call from a non-passive event listener
-   * registered via addEventListener (where state closures would be stale).
-   */
-  const applyDrag = useCallback(
-    (clientX: number, clientY: number) => {
-      if (!isDraggingRef.current) return;
+  const applyDrag = useCallback((clientX: number, clientY: number) => {
+    if (!isDraggingRef.current) return;
+    const pos = getCanvasPercent(clientX, clientY);
+    if (!pos) return;
 
-      const pos = getCanvasPercent(clientX, clientY);
-      if (!pos) return;
+    const deltaX = pos.x - dragStartRef.current.x;
+    const deltaY = pos.y - dragStartRef.current.y;
 
-      const deltaX = pos.x - dragStartRef.current.x;
-      const deltaY = pos.y - dragStartRef.current.y;
-
-      // Update whichever design is active.  We use the functional form of
-      // setState so we always operate on the latest value.
-      const update = (prev: CustomDesign | null): CustomDesign | null => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          x: Math.max(0, Math.min(100 - prev.width, prev.x + deltaX)),
-          y: Math.max(0, Math.min(100 - prev.height, prev.y + deltaY)),
-        };
+    const update = (prev: CustomDesign | null): CustomDesign | null => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        x: Math.max(0, Math.min(100 - prev.width, prev.x + deltaX)),
+        y: Math.max(0, Math.min(100 - prev.height, prev.y + deltaY)),
       };
+    };
 
-      // We need to know the current view inside this callback.  Because
-      // applyDrag is used inside a non-reactive addEventListener, we read
-      // the view from a ref (added below) rather than closing over state.
-      if (viewRef.current === 'front') {
-        setFrontDesign(update);
-      } else {
-        setBackDesign(update);
-      }
+    if (viewRef.current === "front") setFrontDesign(update);
+    else setBackDesign(update);
 
-      dragStartRef.current = pos;
-    },
+    dragStartRef.current = pos;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
+  }, []);
 
-  // ─── Mouse handlers ──────────────────────────────────────────────────────
-
+  // ── Mouse handlers ────────────────────────────────────────────────────────
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const pos = getCanvasPercent(e.clientX, e.clientY);
     if (!pos) return;
@@ -287,10 +240,8 @@ export default function CustomizeProduct() {
     setIsDragging(false);
   };
 
-  // ─── Touch handlers ──────────────────────────────────────────────────────
-
+  // ── Touch handlers ────────────────────────────────────────────────────────
   const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
-    // Only start a drag when a single finger touches the canvas.
     if (e.touches.length !== 1) return;
     const touch = e.touches[0];
     const pos = getCanvasPercent(touch.clientX, touch.clientY);
@@ -305,50 +256,30 @@ export default function CustomizeProduct() {
     setIsDragging(false);
   };
 
-  /**
-   * Attach a NON-PASSIVE touchmove listener to the canvas.
-   *
-   * React's synthetic onTouchMove is passive by default, which means
-   * calling e.preventDefault() inside it has no effect — the browser
-   * scrolls the page anyway.  By using addEventListener with
-   * { passive: false } we can call preventDefault() to lock the scroll
-   * while the user is actively repositioning the design.
-   */
+  // Non-passive touchmove — must use addEventListener to call preventDefault
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
     const onTouchMove = (e: TouchEvent) => {
       if (!isDraggingRef.current || e.touches.length !== 1) return;
-      e.preventDefault(); // stops page scroll while dragging
+      e.preventDefault();
       const touch = e.touches[0];
       applyDrag(touch.clientX, touch.clientY);
     };
-
-    canvas.addEventListener('touchmove', onTouchMove, { passive: false });
-    return () => canvas.removeEventListener('touchmove', onTouchMove);
+    canvas.addEventListener("touchmove", onTouchMove, { passive: false });
+    return () => canvas.removeEventListener("touchmove", onTouchMove);
   }, [applyDrag]);
 
-  // Whether width & height sliders should move together (keep aspect ratio)
-  const [lockAspectRatio, setLockAspectRatio] = useState(true);
-
-  /**
-   * Set width or height directly (in % of canvas).
-   * If lockAspectRatio is true and the image has a known natural ratio,
-   * the other axis is adjusted proportionally.
-   */
-  const setDesignDimension = (
-    axis: 'width' | 'height',
-    value: number
-  ) => {
-    const currentDesign = view === 'front' ? frontDesign : backDesign;
+  // ── Design dimension setter (with optional aspect-ratio lock) ─────────────
+  const setDesignDimension = (axis: "width" | "height", value: number) => {
+    const currentDesign = view === "front" ? frontDesign : backDesign;
     if (!currentDesign) return;
 
     const clamped = Math.max(5, Math.min(100, value));
     let newWidth = currentDesign.width;
     let newHeight = currentDesign.height;
 
-    if (axis === 'width') {
+    if (axis === "width") {
       newWidth = clamped;
       if (lockAspectRatio && currentDesign.height > 0) {
         const ratio = currentDesign.width / currentDesign.height;
@@ -363,68 +294,51 @@ export default function CustomizeProduct() {
     }
 
     const updated = { ...currentDesign, width: newWidth, height: newHeight };
-    if (view === 'front') setFrontDesign(updated);
+    if (view === "front") setFrontDesign(updated);
     else setBackDesign(updated);
   };
 
-  // Update design rotation
-  const updateDesignRotation = (delta: number) => {
-    const currentDesign = view === 'front' ? frontDesign : backDesign;
+  // ── Rotation setter ────────────────────────────────────────────────────────
+  const setRotation = (degrees: number) => {
+    const currentDesign = view === "front" ? frontDesign : backDesign;
     if (!currentDesign) return;
-    
-    const newRotation = (currentDesign.rotation + delta) % 360;
-    
-    const updatedDesign = {
-      ...currentDesign,
-      rotation: newRotation,
-    };
-    
-    if (view === 'front') {
-      setFrontDesign(updatedDesign);
-    } else {
-      setBackDesign(updatedDesign);
-    }
+    const updated = { ...currentDesign, rotation: degrees % 360 };
+    if (view === "front") setFrontDesign(updated);
+    else setBackDesign(updated);
   };
 
-  // Remove design
+  const rotateBy = (delta: number) => {
+    const currentDesign = view === "front" ? frontDesign : backDesign;
+    if (!currentDesign) return;
+    setRotation(currentDesign.rotation + delta);
+  };
+
+  // ── Remove design ─────────────────────────────────────────────────────────
   const removeDesign = () => {
-    if (view === 'front') {
-      setFrontDesign(null);
-      toast.success('Front design removed');
-    } else {
-      setBackDesign(null);
-      toast.success('Back design removed');
-    }
+    if (view === "front") { setFrontDesign(null); toast.success("Front design removed"); }
+    else { setBackDesign(null); toast.success("Back design removed"); }
   };
 
-  // Handle add to cart
+  // ── Add to cart ───────────────────────────────────────────────────────────
   const handleAddToCart = async () => {
     if (!product) return;
-    
-    // Validate size selection if product has sizes
     if (product.sizes && product.sizes.length > 0 && !selectedSize) {
       toast.error("Please select a size");
       return;
     }
-    
     try {
       setIsProcessing(true);
-      const isAuthed = !!getToken();
-      if (!isAuthed) {
+      if (!getToken()) {
         toast.error("Please sign in to add items to cart");
         navigate(`/login?redirect=${encodeURIComponent(location.pathname)}`);
         return;
       }
-      
-      // Capture canvas as preview
       let previewUrl = "";
-      if (canvasRef.current) {
-        previewUrl = canvasRef.current.toDataURL('image/png');
-      }
-      
+      if (canvasRef.current) previewUrl = canvasRef.current.toDataURL("image/png");
+
       const customizationFee = hasAnyCustomization ? feeSettings.customizationFee : 0;
       const price = product.price + customizationFee;
-      
+
       addToCart({
         id: parseInt(product._id) || 0,
         name: `${product.name} (Custom Design)`,
@@ -433,37 +347,25 @@ export default function CustomizeProduct() {
         image: previewUrl || toImageUrl(product.images?.[0]) || "",
         size: selectedSize || undefined,
         customization: {
-          frontDesign: frontDesign ? {
-            imageUrl: frontDesign.imageUrl,
-            x: frontDesign.x,
-            y: frontDesign.y,
-            width: frontDesign.width,
-            height: frontDesign.height,
-            rotation: frontDesign.rotation,
-          } : null,
-          backDesign: backDesign ? {
-            imageUrl: backDesign.imageUrl,
-            x: backDesign.x,
-            y: backDesign.y,
-            width: backDesign.width,
-            height: backDesign.height,
-            rotation: backDesign.rotation,
-          } : null,
+          frontDesign: frontDesign
+            ? { imageUrl: frontDesign.imageUrl, x: frontDesign.x, y: frontDesign.y, width: frontDesign.width, height: frontDesign.height, rotation: frontDesign.rotation }
+            : null,
+          backDesign: backDesign
+            ? { imageUrl: backDesign.imageUrl, x: backDesign.x, y: backDesign.y, width: backDesign.width, height: backDesign.height, rotation: backDesign.rotation }
+            : null,
           previewUrl,
         },
       });
-      
       toast.success("Custom product added to cart!");
       navigate("/cart");
-      
-    } catch (error: any) {
-      console.error("Add to cart error:", error);
+    } catch {
       toast.error("Failed to add to cart");
     } finally {
       setIsProcessing(false);
     }
   };
 
+  // ─────────────────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -486,45 +388,47 @@ export default function CustomizeProduct() {
     );
   }
 
-  const currentDesign = view === 'front' ? frontDesign : backDesign;
-  const hasAnyCustomization = frontDesign || backDesign;
+  const currentDesign = view === "front" ? frontDesign : backDesign;
+  const hasAnyCustomization = !!(frontDesign || backDesign);
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
+
       <div className="max-w-7xl mx-auto px-4 py-8 pt-24">
         <h1 className="text-4xl font-bold mb-2">Customize {product.name}</h1>
         <p className="text-muted-foreground mb-8">
           Upload your own design and position it freely on the product
         </p>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Preview Section */}
+
+          {/* ── Preview ──────────────────────────────────────────────── */}
           <div className="lg:col-span-2">
             <div className="bg-card rounded-lg overflow-hidden shadow-lg p-8">
-              {/* View Toggle */}
+
+              {/* Front / Back toggle */}
               <div className="flex gap-4 mb-6 justify-center">
                 <Button
-                  variant={view === 'front' ? 'default' : 'outline'}
-                  onClick={() => { setView('front'); viewRef.current = 'front'; }}
+                  variant={view === "front" ? "default" : "outline"}
+                  onClick={() => { setView("front"); viewRef.current = "front"; }}
                   className="flex-1 max-w-xs"
                 >
                   Front View
                 </Button>
                 <Button
-                  variant={view === 'back' ? 'default' : 'outline'}
-                  onClick={() => { setView('back'); viewRef.current = 'back'; }}
+                  variant={view === "back" ? "default" : "outline"}
+                  onClick={() => { setView("back"); viewRef.current = "back"; }}
                   className="flex-1 max-w-xs"
                 >
                   Back View
                 </Button>
               </div>
 
-              {/* Canvas Preview */}
-              <div 
+              {/* Canvas */}
+              <div
                 ref={previewRef}
-                className={`flex justify-center items-center bg-muted/20 rounded-lg p-8 relative ${currentDesign ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}`}
+                className={`flex justify-center items-center bg-muted/20 rounded-lg p-8 relative ${currentDesign ? "cursor-grab active:cursor-grabbing" : "cursor-default"}`}
                 style={{ minHeight: "500px" }}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
@@ -542,26 +446,25 @@ export default function CustomizeProduct() {
                 {currentDesign && (
                   <div className="absolute top-4 right-4 bg-black/70 text-white px-3 py-1 rounded text-sm flex items-center gap-2">
                     <Move className="h-4 w-4" />
-                    <span className="hidden sm:inline">Drag</span>
+                    <span className="hidden sm:inline">Drag to position</span>
                     <span className="sm:hidden">Touch &amp; drag</span>
-                    <span className="hidden sm:inline">to position</span>
                   </div>
                 )}
               </div>
-              
-              {/* Status Info */}
-              <div className="mt-4 text-sm text-muted-foreground text-center space-y-1">
+
+              <div className="mt-4 text-sm text-muted-foreground text-center">
                 <p>
-                  <strong>{view === 'front' ? 'Front' : 'Back'} Side:</strong>{' '}
-                  {currentDesign ? '✓ Design uploaded' : 'No design'}
+                  <strong>{view === "front" ? "Front" : "Back"} Side:</strong>{" "}
+                  {currentDesign ? "✓ Design uploaded" : "No design"}
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Controls Section */}
+          {/* ── Controls ─────────────────────────────────────────────── */}
           <div className="space-y-6">
-            {/* Size Selection */}
+
+            {/* Size selection */}
             {product.sizes && product.sizes.length > 0 && (
               <div className="bg-card p-6 rounded-lg shadow">
                 <h3 className="font-semibold text-lg mb-4">Select Size *</h3>
@@ -572,8 +475,8 @@ export default function CustomizeProduct() {
                       onClick={() => setSelectedSize(size)}
                       className={`px-4 py-2 border-2 rounded-md transition-all ${
                         selectedSize === size
-                          ? 'bg-primary text-primary-foreground border-primary'
-                          : 'bg-background hover:border-primary'
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-background hover:border-primary"
                       }`}
                     >
                       {size}
@@ -589,7 +492,7 @@ export default function CustomizeProduct() {
             {/* Design Upload */}
             <div className="bg-card p-6 rounded-lg shadow">
               <h3 className="font-semibold text-lg mb-4">
-                Upload Your Design ({view === 'front' ? 'Front' : 'Back'})
+                Upload Your Design ({view === "front" ? "Front" : "Back"})
               </h3>
               <div className="space-y-3">
                 <div>
@@ -597,9 +500,7 @@ export default function CustomizeProduct() {
                     <div className="border-2 border-dashed rounded-lg p-6 text-center hover:border-primary transition-colors">
                       <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
                       <p className="text-sm font-medium">Click to upload your design</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        PNG, JPG up to 5MB
-                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">PNG, JPG up to 5MB</p>
                     </div>
                   </Label>
                   <Input
@@ -611,35 +512,32 @@ export default function CustomizeProduct() {
                     className="hidden"
                   />
                 </div>
-                
+
                 {currentDesign && (
-                  <div className="space-y-3">
+                  <div className="space-y-4">
+                    {/* Thumbnail + remove */}
                     <div className="flex items-center gap-2">
-                      <div className="w-16 h-16 border rounded overflow-hidden">
-                        <img 
-                          src={currentDesign.imageUrl} 
-                          alt="Uploaded design" 
-                          className="w-full h-full object-cover" 
+                      <div className="w-16 h-16 border rounded overflow-hidden flex-shrink-0">
+                        <img
+                          src={currentDesign.imageUrl}
+                          alt="Uploaded design"
+                          className="w-full h-full object-cover"
                         />
                       </div>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={removeDesign}
-                      >
+                      <Button size="sm" variant="destructive" onClick={removeDesign}>
                         <X className="h-4 w-4 mr-1" />
                         Remove
                       </Button>
                     </div>
-                    
-                    {/* Design Controls */}
-                    <div className="space-y-4 pt-2 border-t">
 
-                      {/* ── Width ─────────────────────────────── */}
+                    {/* ── Size & Rotation controls ── */}
+                    <div className="space-y-4 pt-3 border-t">
+
+                      {/* Width slider */}
                       <div>
                         <div className="flex justify-between items-center mb-1">
-                          <Label className="text-xs">Width</Label>
-                          <span className="text-xs text-muted-foreground tabular-nums">
+                          <Label className="text-xs font-medium">Width</Label>
+                          <span className="text-xs text-muted-foreground tabular-nums font-mono">
                             {Math.round(currentDesign.width)}%
                           </span>
                         </div>
@@ -649,16 +547,18 @@ export default function CustomizeProduct() {
                           max={100}
                           step={1}
                           value={Math.round(currentDesign.width)}
-                          onChange={(e) => setDesignDimension('width', Number(e.target.value))}
-                          className="w-full accent-primary"
+                          onChange={(e) =>
+                            setDesignDimension("width", Number(e.target.value))
+                          }
+                          className="w-full accent-primary h-2 cursor-pointer"
                         />
                       </div>
 
-                      {/* ── Height ────────────────────────────── */}
+                      {/* Height slider */}
                       <div>
                         <div className="flex justify-between items-center mb-1">
-                          <Label className="text-xs">Height</Label>
-                          <span className="text-xs text-muted-foreground tabular-nums">
+                          <Label className="text-xs font-medium">Height</Label>
+                          <span className="text-xs text-muted-foreground tabular-nums font-mono">
                             {Math.round(currentDesign.height)}%
                           </span>
                         </div>
@@ -668,50 +568,48 @@ export default function CustomizeProduct() {
                           max={100}
                           step={1}
                           value={Math.round(currentDesign.height)}
-                          onChange={(e) => setDesignDimension('height', Number(e.target.value))}
-                          className="w-full accent-primary"
+                          onChange={(e) =>
+                            setDesignDimension("height", Number(e.target.value))
+                          }
+                          className="w-full accent-primary h-2 cursor-pointer"
                         />
                       </div>
 
-                      {/* ── Lock aspect ratio ─────────────────── */}
+                      {/* Lock aspect ratio */}
                       <label className="flex items-center gap-2 cursor-pointer select-none">
                         <input
                           type="checkbox"
                           checked={lockAspectRatio}
                           onChange={(e) => setLockAspectRatio(e.target.checked)}
-                          className="accent-primary"
+                          className="accent-primary w-4 h-4"
                         />
                         <span className="text-xs text-muted-foreground">
                           Lock aspect ratio
                         </span>
                       </label>
 
-                      {/* ── Rotation ──────────────────────────── */}
+                      {/* Rotation slider */}
                       <div>
                         <div className="flex justify-between items-center mb-1">
-                          <Label className="text-xs">Rotation</Label>
-                          <span className="text-xs text-muted-foreground tabular-nums">
+                          <Label className="text-xs font-medium">Rotation</Label>
+                          <span className="text-xs text-muted-foreground tabular-nums font-mono">
                             {currentDesign.rotation}°
                           </span>
                         </div>
-                        {/* Free-form slider: −180° → 180° */}
                         <input
                           type="range"
                           min={-180}
                           max={180}
                           step={1}
                           value={currentDesign.rotation}
-                          onChange={(e) => updateDesignRotation(
-                            Number(e.target.value) - currentDesign.rotation
-                          )}
-                          className="w-full accent-primary mb-2"
+                          onChange={(e) => setRotation(Number(e.target.value))}
+                          className="w-full accent-primary h-2 cursor-pointer mb-2"
                         />
-                        {/* Step buttons for fine-tuning */}
                         <div className="flex gap-2">
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => updateDesignRotation(-15)}
+                            onClick={() => rotateBy(-15)}
                             className="flex-1"
                           >
                             ↶ 15°
@@ -719,7 +617,7 @@ export default function CustomizeProduct() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => updateDesignRotation(15)}
+                            onClick={() => rotateBy(15)}
                             className="flex-1"
                           >
                             ↷ 15°
@@ -727,9 +625,9 @@ export default function CustomizeProduct() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => updateDesignRotation(-currentDesign.rotation)}
+                            onClick={() => setRotation(0)}
                             className="flex-1 text-xs"
-                            title="Reset rotation to 0°"
+                            title="Reset rotation"
                           >
                             ↺ Reset
                           </Button>
@@ -774,7 +672,7 @@ export default function CustomizeProduct() {
                   isProcessing ||
                   isLoadingFees ||
                   !hasAnyCustomization ||
-                  (product.sizes && product.sizes.length > 0 && !selectedSize)
+                  !!(product.sizes && product.sizes.length > 0 && !selectedSize)
                 }
               >
                 {isProcessing ? "Processing..." : isLoadingFees ? "Loading fees..." : "Add to Cart"}
@@ -790,6 +688,7 @@ export default function CustomizeProduct() {
                 </p>
               )}
             </div>
+
           </div>
         </div>
       </div>
