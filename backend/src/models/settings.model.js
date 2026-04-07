@@ -7,6 +7,13 @@ const settingsSchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
+    // 'fixed' = flat ₹ amount added per order
+    // 'percentage' = % of order subtotal (items total, before shipping)
+    shippingFeeType: {
+      type: String,
+      enum: ['fixed', 'percentage'],
+      default: 'fixed',
+    },
     customizationFee: {
       type: Number,
       default: 0,
@@ -23,3 +30,4 @@ const settingsSchema = new mongoose.Schema(
 );
 
 module.exports = mongoose.model('Settings', settingsSchema);
+

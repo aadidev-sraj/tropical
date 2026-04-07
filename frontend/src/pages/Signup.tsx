@@ -19,11 +19,19 @@ const Signup = () => {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    // Basic phone validation — 7 to 15 digits (strips spaces/dashes for check)
+    const digitsOnly = phone.replace(/[\s\-+()]/g, '');
+    if (digitsOnly.length < 7 || digitsOnly.length > 15 || !/^\d+$/.test(digitsOnly)) {
+      setError("Please enter a valid phone number (7–15 digits)");
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await apiFetch<{ token: string }>("/auth/register", {
         method: "POST",
-        body: JSON.stringify({ name, email, password, phone }),
+        body: JSON.stringify({ name, email, password, phone: digitsOnly }),
       });
       setToken(res.token);
       navigate("/profile", { replace: true });
@@ -53,8 +61,18 @@ const Signup = () => {
                 <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
               </div>
               <div>
-                <Label htmlFor="phone">Phone</Label>
-                <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                <Label htmlFor="phone">Mobile Number <span className="text-red-500">*</span></Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="9876543210"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  required
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  You can use this number to log in instead of your email
+                </p>
               </div>
               <div>
                 <Label htmlFor="password">Password</Label>

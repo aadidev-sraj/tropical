@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -42,6 +42,9 @@ export default function CustomizeProduct() {
   
   // Customization state
   const [view, setView] = useState<'front' | 'back'>('front');
+  // Keep a ref in sync with view so the non-reactive touchmove handler
+  // can always see the current value without stale closures.
+  const viewRef = useRef<'front' | 'back'>('front');
   const [selectedSize, setSelectedSize] = useState<string>('');
   
   // Front customization
@@ -51,8 +54,11 @@ export default function CustomizeProduct() {
   const [backDesign, setBackDesign] = useState<CustomDesign | null>(null);
   
   // Dragging state
+  // Using a ref (not state) for dragStart so the non-passive touch
+  // listener can always read the latest value without stale closures.
   const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const dragStartRef = useRef({ x: 0, y: 0 });
+  const isDraggingRef = useRef(false);
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [feeSettings, setFeeSettings] = useState<FeeSettings>({ shippingFee: 0, customizationFee: 0 });
@@ -205,54 +211,123 @@ export default function CustomizeProduct() {
     reader.readAsDataURL(file);
   };
 
-  // Handle mouse down on design
-  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!previewRef.current) return;
-    
-    const rect = previewRef.current.getBoundingClientRect();
-    setIsDragging(true);
-    setDragStart({
-      x: ((e.clientX - rect.left) / rect.width) * 100,
-      y: ((e.clientY - rect.top) / rect.height) * 100,
-    });
-  };
+  // ─── Shared drag utilities ───────────────────────────────────────────────
 
-  // Handle mouse move
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!isDragging || !previewRef.current) return;
-    
-    const currentDesign = view === 'front' ? frontDesign : backDesign;
-    if (!currentDesign) return;
-    
-    const rect = previewRef.current.getBoundingClientRect();
-    const currentX = ((e.clientX - rect.left) / rect.width) * 100;
-    const currentY = ((e.clientY - rect.top) / rect.height) * 100;
-    
-    const deltaX = currentX - dragStart.x;
-    const deltaY = currentY - dragStart.y;
-    
-    const newX = Math.max(0, Math.min(100 - currentDesign.width, currentDesign.x + deltaX));
-    const newY = Math.max(0, Math.min(100 - currentDesign.height, currentDesign.y + deltaY));
-    
-    const updatedDesign = {
-      ...currentDesign,
-      x: newX,
-      y: newY,
+  /**
+   * Convert a raw clientX/clientY into a percentage position relative to
+   * the canvas element. This is the single source of truth for both mouse
+   * and touch coordinate normalisation.
+   */
+  const getCanvasPercent = (clientX: number, clientY: number) => {
+    if (!canvasRef.current) return null;
+    const rect = canvasRef.current.getBoundingClientRect();
+    return {
+      x: ((clientX - rect.left) / rect.width) * 100,
+      y: ((clientY - rect.top) / rect.height) * 100,
     };
-    
-    if (view === 'front') {
-      setFrontDesign(updatedDesign);
-    } else {
-      setBackDesign(updatedDesign);
-    }
-    
-    setDragStart({ x: currentX, y: currentY });
   };
 
-  // Handle mouse up
+  /**
+   * Core move logic — called by both mouse move and touch move handlers.
+   * Reads from refs so it is safe to call from a non-passive event listener
+   * registered via addEventListener (where state closures would be stale).
+   */
+  const applyDrag = useCallback(
+    (clientX: number, clientY: number) => {
+      if (!isDraggingRef.current) return;
+
+      const pos = getCanvasPercent(clientX, clientY);
+      if (!pos) return;
+
+      const deltaX = pos.x - dragStartRef.current.x;
+      const deltaY = pos.y - dragStartRef.current.y;
+
+      // Update whichever design is active.  We use the functional form of
+      // setState so we always operate on the latest value.
+      const update = (prev: CustomDesign | null): CustomDesign | null => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          x: Math.max(0, Math.min(100 - prev.width, prev.x + deltaX)),
+          y: Math.max(0, Math.min(100 - prev.height, prev.y + deltaY)),
+        };
+      };
+
+      // We need to know the current view inside this callback.  Because
+      // applyDrag is used inside a non-reactive addEventListener, we read
+      // the view from a ref (added below) rather than closing over state.
+      if (viewRef.current === 'front') {
+        setFrontDesign(update);
+      } else {
+        setBackDesign(update);
+      }
+
+      dragStartRef.current = pos;
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
+  // ─── Mouse handlers ──────────────────────────────────────────────────────
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const pos = getCanvasPercent(e.clientX, e.clientY);
+    if (!pos) return;
+    isDraggingRef.current = true;
+    setIsDragging(true);
+    dragStartRef.current = pos;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    applyDrag(e.clientX, e.clientY);
+  };
+
   const handleMouseUp = () => {
+    isDraggingRef.current = false;
     setIsDragging(false);
   };
+
+  // ─── Touch handlers ──────────────────────────────────────────────────────
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    // Only start a drag when a single finger touches the canvas.
+    if (e.touches.length !== 1) return;
+    const touch = e.touches[0];
+    const pos = getCanvasPercent(touch.clientX, touch.clientY);
+    if (!pos) return;
+    isDraggingRef.current = true;
+    setIsDragging(true);
+    dragStartRef.current = pos;
+  };
+
+  const handleTouchEnd = () => {
+    isDraggingRef.current = false;
+    setIsDragging(false);
+  };
+
+  /**
+   * Attach a NON-PASSIVE touchmove listener to the canvas.
+   *
+   * React's synthetic onTouchMove is passive by default, which means
+   * calling e.preventDefault() inside it has no effect — the browser
+   * scrolls the page anyway.  By using addEventListener with
+   * { passive: false } we can call preventDefault() to lock the scroll
+   * while the user is actively repositioning the design.
+   */
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (!isDraggingRef.current || e.touches.length !== 1) return;
+      e.preventDefault(); // stops page scroll while dragging
+      const touch = e.touches[0];
+      applyDrag(touch.clientX, touch.clientY);
+    };
+
+    canvas.addEventListener('touchmove', onTouchMove, { passive: false });
+    return () => canvas.removeEventListener('touchmove', onTouchMove);
+  }, [applyDrag]);
 
   // Update design size
   const updateDesignSize = (delta: number) => {
@@ -415,14 +490,14 @@ export default function CustomizeProduct() {
               <div className="flex gap-4 mb-6 justify-center">
                 <Button
                   variant={view === 'front' ? 'default' : 'outline'}
-                  onClick={() => setView('front')}
+                  onClick={() => { setView('front'); viewRef.current = 'front'; }}
                   className="flex-1 max-w-xs"
                 >
                   Front View
                 </Button>
                 <Button
                   variant={view === 'back' ? 'default' : 'outline'}
-                  onClick={() => setView('back')}
+                  onClick={() => { setView('back'); viewRef.current = 'back'; }}
                   className="flex-1 max-w-xs"
                 >
                   Back View
@@ -432,7 +507,7 @@ export default function CustomizeProduct() {
               {/* Canvas Preview */}
               <div 
                 ref={previewRef}
-                className="flex justify-center items-center bg-muted/20 rounded-lg p-8 relative cursor-move" 
+                className={`flex justify-center items-center bg-muted/20 rounded-lg p-8 relative ${currentDesign ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}`}
                 style={{ minHeight: "500px" }}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
@@ -442,13 +517,17 @@ export default function CustomizeProduct() {
                   ref={canvasRef}
                   width={600}
                   height={700}
-                  className="max-w-full h-auto border rounded shadow-sm"
+                  className="max-w-full h-auto border rounded shadow-sm touch-none"
                   onMouseDown={currentDesign ? handleMouseDown : undefined}
+                  onTouchStart={currentDesign ? handleTouchStart : undefined}
+                  onTouchEnd={currentDesign ? handleTouchEnd : undefined}
                 />
                 {currentDesign && (
                   <div className="absolute top-4 right-4 bg-black/70 text-white px-3 py-1 rounded text-sm flex items-center gap-2">
                     <Move className="h-4 w-4" />
-                    Drag to position
+                    <span className="hidden sm:inline">Drag</span>
+                    <span className="sm:hidden">Touch &amp; drag</span>
+                    <span className="hidden sm:inline">to position</span>
                   </div>
                 )}
               </div>

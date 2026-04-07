@@ -29,7 +29,7 @@ export default function Payment() {
       zipCode: ""
     }
   });
-  const [feeSettings, setFeeSettings] = useState<FeeSettings>({ shippingFee: 0, customizationFee: 0 });
+  const [feeSettings, setFeeSettings] = useState<FeeSettings>({ shippingFee: 0, shippingFeeType: 'fixed', customizationFee: 0 });
   const [isLoadingFees, setIsLoadingFees] = useState(true);
   const [feeError, setFeeError] = useState<string | null>(null);
 
@@ -52,7 +52,7 @@ export default function Payment() {
         if (isMounted) {
           console.error("Failed to load fee settings", error);
           setFeeError("Unable to load latest fee settings. Using defaults.");
-          setFeeSettings({ shippingFee: 0, customizationFee: 0 });
+          setFeeSettings({ shippingFee: 0, shippingFeeType: 'fixed', customizationFee: 0 });
         }
       } finally {
         if (isMounted) setIsLoadingFees(false);
@@ -66,7 +66,14 @@ export default function Payment() {
   }, []);
 
   const subtotal = useMemo(() => items.reduce((sum, it) => sum + it.price * it.quantity, 0), [items]);
-  const shipping = items.length > 0 ? feeSettings.shippingFee : 0;
+  // Apply fixed ₹ shipping OR a percentage of subtotal, only when cart has items
+  const shipping = useMemo(() => {
+    if (items.length === 0) return 0;
+    if (feeSettings.shippingFeeType === 'percentage') {
+      return (subtotal * feeSettings.shippingFee) / 100;
+    }
+    return feeSettings.shippingFee; // fixed flat fee
+  }, [items, subtotal, feeSettings]);
   const total = subtotal + shipping;
 
   const handlePlaceOrder = async () => {
@@ -380,7 +387,11 @@ export default function Payment() {
             <h2 className="font-semibold mb-4">Order Summary</h2>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between"><span>Subtotal</span><span>{formatPrice(subtotal)}</span></div>
-              <div className="flex justify-between"><span>Shipping</span><span>{formatPrice(shipping)}</span></div>
+              <div className="flex justify-between"><span>Shipping</span><span>
+                {feeSettings.shippingFeeType === 'percentage' && items.length > 0
+                  ? `${feeSettings.shippingFee}% (${formatPrice(shipping)})`
+                  : formatPrice(shipping)}
+              </span></div>
               <div className="flex justify-between font-semibold border-t pt-2"><span>Total</span><span>{formatPrice(total)}</span></div>
             </div>
             <button

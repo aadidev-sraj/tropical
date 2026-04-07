@@ -6,6 +6,7 @@ export function getToken(): string | null {
 
 export type FeeSettings = {
   shippingFee: number;
+  shippingFeeType: 'fixed' | 'percentage';
   customizationFee: number;
 };
 
@@ -19,6 +20,7 @@ export async function getFeeSettings(forceRefresh = false): Promise<FeeSettings>
   const response = await apiFetch<{ success: boolean; data: FeeSettings }>('/settings');
   cachedSettings = {
     shippingFee: response.data?.shippingFee ?? 0,
+    shippingFeeType: response.data?.shippingFeeType ?? 'fixed',
     customizationFee: response.data?.customizationFee ?? 0,
   };
   return cachedSettings;

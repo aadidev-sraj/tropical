@@ -9,7 +9,7 @@ import { apiFetch, setToken } from "@/lib/api";
 
 const Login = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +23,7 @@ const Login = () => {
     try {
       const res = await apiFetch<{ token: string }>("/auth/login", {
         method: "POST",
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ identifier, password }),
       });
       setToken(res.token);
       navigate(redirectTo || "/profile", { replace: true });
@@ -45,8 +45,16 @@ const Login = () => {
           <CardContent>
             <form onSubmit={onSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                <Label htmlFor="identifier">Email or Mobile Number</Label>
+                <Input
+                  id="identifier"
+                  type="text"
+                  placeholder="you@email.com or 9876543210"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  autoComplete="username"
+                  required
+                />
               </div>
               <div>
                 <Label htmlFor="password">Password</Label>

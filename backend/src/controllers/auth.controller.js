@@ -69,18 +69,31 @@ exports.register = async (req, res, next) => {
 // @access  Public
 exports.login = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    // 'identifier' can be an email address or a phone number
+    const { identifier, email, password } = req.body;
+    const loginId = identifier || email; // accept both field names for backward compat
 
-    // Check if user exists
-    const user = await User.findOne({ email }).select('+password');
+    if (!loginId || !password) {
+      return res.status(400).json({ message: 'Please provide an email/phone and password' });
+    }
+
+    // Try to find the user by email first, then by phone number
+    let user = await User.findOne({ email: loginId.toLowerCase() }).select('+password');
+
     if (!user) {
-      return res.status(401).json({ message: 'Invalid email or password' });
+      // Strip spaces/dashes so "98765 43210" matches "9876543210"
+      const normalizedPhone = loginId.replace(/[\s\-]/g, '');
+      user = await User.findOne({ phone: normalizedPhone }).select('+password');
+    }
+
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     // Check password
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid email or password' });
+      return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     // Update last login

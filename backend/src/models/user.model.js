@@ -25,7 +25,9 @@ const userSchema = new mongoose.Schema({
   },
   phone: {
     type: String,
-    trim: true
+    trim: true,
+    sparse: true,   // allows multiple docs with no phone without unique clash
+    index: true,    // makes findOne({ phone }) fast
   },
   avatar: {
     type: String,

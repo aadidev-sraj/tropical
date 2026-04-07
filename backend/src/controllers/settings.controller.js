@@ -17,8 +17,9 @@ exports.getSettings = async (req, res) => {
 
 exports.updateSettings = async (req, res) => {
   try {
-    const { shippingFee, customizationFee } = req.body;
+    const { shippingFee, shippingFeeType, customizationFee } = req.body;
 
+    // Validate numeric fields
     if (
       (shippingFee !== undefined && typeof shippingFee !== 'number') ||
       (customizationFee !== undefined && typeof customizationFee !== 'number')
@@ -29,13 +30,29 @@ exports.updateSettings = async (req, res) => {
       });
     }
 
-    let settings = await Settings.findOne();
+    // Validate fee type
+    if (shippingFeeType !== undefined && !['fixed', 'percentage'].includes(shippingFeeType)) {
+      return res.status(400).json({
+        success: false,
+        message: "shippingFeeType must be 'fixed' or 'percentage'",
+      });
+    }
 
+    // Percentage value sanity check (0–100)
+    if (shippingFeeType === 'percentage' && shippingFee !== undefined && shippingFee > 100) {
+      return res.status(400).json({
+        success: false,
+        message: 'Percentage shipping fee cannot exceed 100%',
+      });
+    }
+
+    let settings = await Settings.findOne();
     if (!settings) {
       settings = new Settings();
     }
 
     if (shippingFee !== undefined) settings.shippingFee = Math.max(shippingFee, 0);
+    if (shippingFeeType !== undefined) settings.shippingFeeType = shippingFeeType;
     if (customizationFee !== undefined) settings.customizationFee = Math.max(customizationFee, 0);
 
     if (req.user) {
@@ -50,3 +67,4 @@ exports.updateSettings = async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to update settings' });
   }
 };
+

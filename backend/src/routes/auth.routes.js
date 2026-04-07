@@ -24,7 +24,12 @@ router.post(
 router.post(
   '/login',
   [
-    check('email', 'Please include a valid email').isEmail(),
+    check('identifier', 'Please provide an email or phone number')
+      .optional()
+      .notEmpty(),
+    check('email', 'Please provide an email or phone number')
+      .optional()
+      .notEmpty(),
     check('password', 'Password is required').exists()
   ],
   login

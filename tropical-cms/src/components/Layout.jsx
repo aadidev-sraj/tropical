@@ -37,6 +37,10 @@ function Layout({ onLogout }) {
           <Link to="/hero" className={`nav-link ${isActive('/hero')}`}>
             Hero Section
           </Link>
+          <div className="nav-divider" />
+          <Link to="/settings" className={`nav-link ${isActive('/settings')}`}>
+            ⚙ Settings
+          </Link>
         </nav>
         <div className="sidebar-footer">
           <button onClick={onLogout} className="btn btn-danger logout-btn">
