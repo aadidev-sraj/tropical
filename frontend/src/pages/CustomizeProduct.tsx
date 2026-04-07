@@ -329,25 +329,42 @@ export default function CustomizeProduct() {
     return () => canvas.removeEventListener('touchmove', onTouchMove);
   }, [applyDrag]);
 
-  // Update design size
-  const updateDesignSize = (delta: number) => {
+  // Whether width & height sliders should move together (keep aspect ratio)
+  const [lockAspectRatio, setLockAspectRatio] = useState(true);
+
+  /**
+   * Set width or height directly (in % of canvas).
+   * If lockAspectRatio is true and the image has a known natural ratio,
+   * the other axis is adjusted proportionally.
+   */
+  const setDesignDimension = (
+    axis: 'width' | 'height',
+    value: number
+  ) => {
     const currentDesign = view === 'front' ? frontDesign : backDesign;
     if (!currentDesign) return;
-    
-    const newWidth = Math.max(20, Math.min(80, currentDesign.width + delta));
-    const newHeight = Math.max(20, Math.min(80, currentDesign.height + delta));
-    
-    const updatedDesign = {
-      ...currentDesign,
-      width: newWidth,
-      height: newHeight,
-    };
-    
-    if (view === 'front') {
-      setFrontDesign(updatedDesign);
+
+    const clamped = Math.max(5, Math.min(100, value));
+    let newWidth = currentDesign.width;
+    let newHeight = currentDesign.height;
+
+    if (axis === 'width') {
+      newWidth = clamped;
+      if (lockAspectRatio && currentDesign.height > 0) {
+        const ratio = currentDesign.width / currentDesign.height;
+        newHeight = Math.max(5, Math.min(100, clamped / ratio));
+      }
     } else {
-      setBackDesign(updatedDesign);
+      newHeight = clamped;
+      if (lockAspectRatio && currentDesign.width > 0) {
+        const ratio = currentDesign.width / currentDesign.height;
+        newWidth = Math.max(5, Math.min(100, clamped * ratio));
+      }
     }
+
+    const updated = { ...currentDesign, width: newWidth, height: newHeight };
+    if (view === 'front') setFrontDesign(updated);
+    else setBackDesign(updated);
   };
 
   // Update design rotation
@@ -616,34 +633,86 @@ export default function CustomizeProduct() {
                     </div>
                     
                     {/* Design Controls */}
-                    <div className="space-y-2 pt-2 border-t">
+                    <div className="space-y-4 pt-2 border-t">
+
+                      {/* ── Width ─────────────────────────────── */}
                       <div>
-                        <Label className="text-xs">Size</Label>
-                        <div className="flex gap-2 mt-1">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => updateDesignSize(-5)}
-                          >
-                            Smaller
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => updateDesignSize(5)}
-                          >
-                            Larger
-                          </Button>
+                        <div className="flex justify-between items-center mb-1">
+                          <Label className="text-xs">Width</Label>
+                          <span className="text-xs text-muted-foreground tabular-nums">
+                            {Math.round(currentDesign.width)}%
+                          </span>
                         </div>
+                        <input
+                          type="range"
+                          min={5}
+                          max={100}
+                          step={1}
+                          value={Math.round(currentDesign.width)}
+                          onChange={(e) => setDesignDimension('width', Number(e.target.value))}
+                          className="w-full accent-primary"
+                        />
                       </div>
-                      
+
+                      {/* ── Height ────────────────────────────── */}
                       <div>
-                        <Label className="text-xs">Rotation</Label>
-                        <div className="flex gap-2 mt-1">
+                        <div className="flex justify-between items-center mb-1">
+                          <Label className="text-xs">Height</Label>
+                          <span className="text-xs text-muted-foreground tabular-nums">
+                            {Math.round(currentDesign.height)}%
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min={5}
+                          max={100}
+                          step={1}
+                          value={Math.round(currentDesign.height)}
+                          onChange={(e) => setDesignDimension('height', Number(e.target.value))}
+                          className="w-full accent-primary"
+                        />
+                      </div>
+
+                      {/* ── Lock aspect ratio ─────────────────── */}
+                      <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={lockAspectRatio}
+                          onChange={(e) => setLockAspectRatio(e.target.checked)}
+                          className="accent-primary"
+                        />
+                        <span className="text-xs text-muted-foreground">
+                          Lock aspect ratio
+                        </span>
+                      </label>
+
+                      {/* ── Rotation ──────────────────────────── */}
+                      <div>
+                        <div className="flex justify-between items-center mb-1">
+                          <Label className="text-xs">Rotation</Label>
+                          <span className="text-xs text-muted-foreground tabular-nums">
+                            {currentDesign.rotation}°
+                          </span>
+                        </div>
+                        {/* Free-form slider: −180° → 180° */}
+                        <input
+                          type="range"
+                          min={-180}
+                          max={180}
+                          step={1}
+                          value={currentDesign.rotation}
+                          onChange={(e) => updateDesignRotation(
+                            Number(e.target.value) - currentDesign.rotation
+                          )}
+                          className="w-full accent-primary mb-2"
+                        />
+                        {/* Step buttons for fine-tuning */}
+                        <div className="flex gap-2">
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => updateDesignRotation(-15)}
+                            className="flex-1"
                           >
                             ↶ 15°
                           </Button>
@@ -651,14 +720,22 @@ export default function CustomizeProduct() {
                             size="sm"
                             variant="outline"
                             onClick={() => updateDesignRotation(15)}
+                            className="flex-1"
                           >
                             ↷ 15°
                           </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => updateDesignRotation(-currentDesign.rotation)}
+                            className="flex-1 text-xs"
+                            title="Reset rotation to 0°"
+                          >
+                            ↺ Reset
+                          </Button>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Current: {currentDesign.rotation}°
-                        </p>
                       </div>
+
                     </div>
                   </div>
                 )}
