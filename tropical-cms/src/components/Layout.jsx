@@ -3,13 +3,13 @@ import { useState } from 'react';
 import './Layout.css';
 
 const NAV_ITEMS = [
-  { to: '/', label: 'Dashboard', icon: '📊' },
-  { to: '/products', label: 'Products', icon: '👕' },
-  { to: '/designs', label: 'Designs', icon: '🎨' },
-  { to: '/orders', label: 'Orders', icon: '📦' },
-  { to: '/contacts', label: 'Contact Messages', icon: '✉️' },
-  { to: '/featured', label: 'Wheel Items', icon: '⭐' },
-  { to: '/hero', label: 'Hero Section', icon: '🖼️' },
+  { to: '/', label: 'Dashboard', icon: 'fa-solid fa-gauge-high' },
+  { to: '/products', label: 'Products', icon: 'fa-solid fa-shirt' },
+  { to: '/designs', label: 'Designs', icon: 'fa-solid fa-pen-ruler' },
+  { to: '/orders', label: 'Orders', icon: 'fa-solid fa-box' },
+  { to: '/contacts', label: 'Contact Messages', icon: 'fa-solid fa-envelope' },
+  { to: '/featured', label: 'Wheel Items', icon: 'fa-solid fa-star' },
+  { to: '/hero', label: 'Hero Section', icon: 'fa-solid fa-image' },
 ];
 
 function Layout({ onLogout }) {
@@ -51,7 +51,7 @@ function Layout({ onLogout }) {
               onClick={closeSidebar}
               aria-label="Close navigation"
             >
-              ✕
+              <i className="fa-solid fa-xmark" />
             </button>
           </div>
         </div>
@@ -64,7 +64,7 @@ function Layout({ onLogout }) {
               className={`nav-link ${isActive(to)}`}
               onClick={closeSidebar}
             >
-              <span className="nav-icon">{icon}</span>
+              <span className="nav-icon"><i className={icon} /></span>
               <span className="nav-label">{label}</span>
             </Link>
           ))}
@@ -74,13 +74,14 @@ function Layout({ onLogout }) {
             className={`nav-link ${isActive('/settings')}`}
             onClick={closeSidebar}
           >
-            <span className="nav-icon">⚙️</span>
+            <span className="nav-icon"><i className="fa-solid fa-gear" /></span>
             <span className="nav-label">Settings</span>
           </Link>
         </nav>
 
         <div className="sidebar-footer">
           <button onClick={onLogout} className="btn btn-danger logout-btn">
+            <i className="fa-solid fa-right-from-bracket" style={{ marginRight: '0.5rem' }} />
             Logout
           </button>
         </div>
